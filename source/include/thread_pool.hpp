@@ -1,9 +1,10 @@
 #pragma once
 
+#include "spin_lock.hpp"
+#include <functional>
 #include <vector>
 #include <thread>
 #include <list>
-#include <mutex>
 
 class Task {
 public:
@@ -17,11 +18,14 @@ public:
     ThreadPool(size_t thread_count = 0);
     ~ThreadPool();
 
+    void parallelFor(size_t width, size_t height, const std::function<void(size_t, size_t)> &lambda);
+    void wait() const;
+
     void addTask(Task *task);
     Task *getTask();
 private:
-    bool alive;
+    std::atomic<int> alive;
     std::vector<std::thread> threads;
     std::list<Task *> tasks;
-    std::mutex lock;
+    SpinLock spin_lock {};
 };
