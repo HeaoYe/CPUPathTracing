@@ -4,7 +4,7 @@
 #include <functional>
 #include <vector>
 #include <thread>
-#include <list>
+#include <queue>
 
 class Task {
 public:
@@ -26,6 +26,6 @@ public:
 private:
     std::atomic<int> alive;
     std::vector<std::thread> threads;
-    std::list<Task *> tasks;
+    std::queue<Task *> tasks;
     SpinLock spin_lock {};
 };
