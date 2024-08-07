@@ -26,6 +26,7 @@ public:
 private:
     std::atomic<int> alive;
     std::vector<std::thread> threads;
+    std::atomic<int> pending_task_count;
     std::queue<Task *> tasks;
     SpinLock spin_lock {};
 };
