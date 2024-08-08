@@ -3,6 +3,8 @@
 #include "camera.hpp"
 #include "sphere.hpp"
 #include "model.hpp"
+#include "plane.hpp"
+#include "scene.hpp"
 
 #include <iostream>
 
@@ -10,7 +12,7 @@ int main() {
     ThreadPool thread_pool {};
 
     Film film { 1920, 1080 };
-    Camera camera { film, { -0.6, 0, 0 }, { 0, 0, 0 }, 90 };
+    Camera camera { film, { -1.6, 0, 0 }, { 0, 0, 0 }, 90 };
     std::atomic<int> count = 0;
 
     Model model("models/simple_dragon.obj");
@@ -18,13 +20,21 @@ int main() {
         { 0, 0, 0 },
         0.5f
     };
-    Shape &shape = model;
+    Plane plane {
+        { 0, 0, 0 },
+        { 0, 1, 0 }
+    };
+
+    Scene scene {};
+    scene.addShape(&model, { 0, 0, 0 }, { 1, 3, 2 });
+    scene.addShape(&sphere, { 0, 0, 1.5 }, { 0.3, 0.3, 0.3 });
+    scene.addShape(&plane, { 0, -0.5, 0 });
 
     glm::vec3 light_pos { -1, 2, 1 };
 
     thread_pool.parallelFor(film.getWidth(), film.getHeight(), [&](size_t x, size_t y) {
         auto ray = camera.generateRay({ x, y });
-        auto hit_info = shape.intersect(ray);
+        auto hit_info = scene.intersect(ray);
         if (hit_info.has_value()) {
             auto L = glm::normalize(light_pos - hit_info->hit_point);
             float cosine = glm::max(0.f, glm::dot(hit_info->normal, L));
@@ -32,9 +42,9 @@ int main() {
             film.setPixel(x, y, { cosine, cosine, cosine });
         }
 
-        count ++;
-        if (count % film.getWidth() == 0) {
-            std::cout << static_cast<float>(count) / (film.getHeight() * film.getWidth()) << std::endl;
+        int n = ++count;
+        if (n % film.getWidth() == 0) {
+            std::cout << static_cast<float>(n) / (film.getHeight() * film.getWidth()) << std::endl;
         }
     });
 
