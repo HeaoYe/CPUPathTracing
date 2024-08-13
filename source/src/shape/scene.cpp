@@ -1,4 +1,4 @@
-#include "scene.hpp"
+#include "shape/scene.hpp"
 #include <glm/ext/matrix_transform.hpp>
 
 void Scene::addShape(const Shape &shape, const Material &material, const glm::vec3 &pos, const glm::vec3 &scale, const glm::vec3 &rotate) {

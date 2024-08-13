@@ -1,6 +1,6 @@
 #pragma once
 
-#include "material.hpp"
+#include "../shape/material.hpp"
 #include <glm/glm.hpp>
 
 struct Ray {
