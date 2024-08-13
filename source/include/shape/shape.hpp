@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ray.hpp"
+#include "../camera/ray.hpp"
 #include <optional>
 
 struct Shape {
