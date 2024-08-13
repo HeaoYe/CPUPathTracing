@@ -22,6 +22,7 @@ public:
         pixels[y * width + x].color += color;
         pixels[y * width + x].sample_count ++;
     }
+    void clear() { pixels.clear(); pixels.resize(width * height); }
 private:
     size_t width, height;
     std::vector<Pixel> pixels;
