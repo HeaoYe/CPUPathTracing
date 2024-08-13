@@ -1,4 +1,6 @@
-#include "thread_pool.hpp"
+#include "thread/thread_pool.hpp"
+
+ThreadPool thread_pool {};
 
 void ThreadPool::WorkerThread(ThreadPool *master) {
     while (master->alive == 1) {
