@@ -9,6 +9,7 @@
 class Task {
 public:
     virtual void run() = 0;
+    virtual ~Task() = default;
 };
 
 class ThreadPool {
@@ -18,7 +19,7 @@ public:
     ThreadPool(size_t thread_count = 0);
     ~ThreadPool();
 
-    void parallelFor(size_t width, size_t height, const std::function<void(size_t, size_t)> &lambda);
+    void parallelFor(size_t width, size_t height, const std::function<void(size_t, size_t)> &lambda, bool complex = true);
     void wait() const;
 
     void addTask(Task *task);

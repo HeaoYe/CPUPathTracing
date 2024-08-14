@@ -55,3 +55,31 @@ int main() {
 
     return 0;
 }
+
+// Debug Mode
+// load model 100ms
+// parallelFor 700ms
+// Film::save 130ms
+// render 1spp normal.ppm 5504ms
+// render 128spp test.ppm 1222161ms
+
+// Release Mode
+// load model 19ms
+// parallelFor 400ms
+// Film::save 53ms
+// render 1spp normal.ppm 1189ms
+// render 128spp test.ppm 91556ms
+
+// Change parallelFor
+// parallelFor 0ms
+
+// Change Film::save
+// Film::save 2ms
+
+// Add Bounds
+// load model 29ms
+// render 1spp normal.ppm 235ms
+// render 128spp test.ppm 53841ms
+
+// Use rapidobj
+// load model 2ms
