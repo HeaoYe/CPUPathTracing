@@ -5,5 +5,9 @@ project(
     LANGUAGES CXX
 )
 
+set(CMAKE_BUILD_TYPE Release)
+
 add_subdirectory(thirdparty/glm)
+add_subdirectory(thirdparty/rapidobj)
+
 add_subdirectory(source)
