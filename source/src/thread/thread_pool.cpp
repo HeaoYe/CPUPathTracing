@@ -1,10 +1,13 @@
 #include "thread/thread_pool.hpp"
-#include "util/profile.hpp"
 
 ThreadPool thread_pool {};
 
 void ThreadPool::WorkerThread(ThreadPool *master) {
     while (master->alive == 1) {
+        if (master->tasks.empty()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+            continue;
+        }
         Task *task = master->getTask();
         if (task != nullptr) {
             task->run();
@@ -54,8 +57,6 @@ private:
 };
 
 void ThreadPool::parallelFor(size_t width, size_t height, const std::function<void(size_t, size_t)> &lambda, bool complex) {
-    PROFILE("parallelFor")
-
     Guard guard(spin_lock);
 
     float chunk_width_float = static_cast<float>(width) / sqrt(threads.size());
