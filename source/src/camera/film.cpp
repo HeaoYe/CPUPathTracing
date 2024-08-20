@@ -1,7 +1,6 @@
 #include "camera/film.hpp"
 #include "thread/thread_pool.hpp"
 #include "util/rgb.hpp"
-#include "util/profile.hpp"
 #include <fstream>
 
 Film::Film(size_t width, size_t height) : width(width), height(height) {
@@ -9,8 +8,6 @@ Film::Film(size_t width, size_t height) : width(width), height(height) {
 }
 
 void Film::save(const std::filesystem::path &filename) {
-    PROFILE("Save to " + filename.string())
-
     std::ofstream file(filename, std::ios::binary);
     file << "P6\n" << width << ' ' << height << "\n255\n";
 
