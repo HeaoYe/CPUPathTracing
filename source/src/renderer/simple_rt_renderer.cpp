@@ -5,8 +5,9 @@ glm::vec3 SimpleRTRenderer::renderPixel(const glm::ivec2 &pixel_coord) {
     auto ray = camera.generateRay(pixel_coord, { rng.uniform(), rng.uniform() });
     glm::vec3 beta = { 1, 1, 1 };
     glm::vec3 color = { 0, 0, 0 };
+    size_t max_bounce_count = 32;
 
-    while (true) {
+    while (max_bounce_count--) {
         auto hit_info = scene.intersect(ray);
         if (hit_info.has_value()) {
             color += beta * hit_info->material->emissive;
