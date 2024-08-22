@@ -28,6 +28,18 @@ struct Bounds {
         return (diag.x * (diag.y + diag.z) + diag.y * diag.z) * 2.f;
     }
 
+    glm::vec3 getCorner(size_t idx) const {
+        auto corner = b_max;
+        if ((idx & 0b1) == 0) corner.x = b_min.x;
+        if ((idx & 0b10) == 0) corner.y = b_min.y;
+        if ((idx & 0b100) == 0) corner.z = b_min.z;
+        return corner;
+    }
+
+    bool isValid() const {
+        return b_max.x >= b_min.x && b_max.y >= b_min.y && b_max.z >= b_min.z;
+    }
+
     glm::vec3 b_min;
     glm::vec3 b_max;
 };
