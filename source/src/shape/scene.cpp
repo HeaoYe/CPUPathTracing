@@ -12,24 +12,5 @@ void Scene::addShape(const Shape &shape, const Material &material, const glm::ve
 }
 
 std::optional<HitInfo> Scene::intersect(const Ray &ray, float t_min, float t_max) const {
-    std::optional<HitInfo> closest_hit_info {};
-    const ShapeInstance *closest_instance = nullptr;
-
-    for (const auto &instance : instances) {
-        auto ray_object = ray.objectFromWorld(instance.object_from_world);
-        auto hit_info = instance.shape.intersect(ray_object, t_min, t_max);
-        if (hit_info.has_value()) {
-            closest_hit_info = hit_info;
-            t_max = hit_info->t;
-            closest_instance = &instance;
-        }
-    }
-
-    if (closest_instance) {
-        closest_hit_info->hit_point = closest_instance->world_from_object * glm::vec4(closest_hit_info->hit_point, 1.f);
-        closest_hit_info->normal = glm::normalize(glm::vec3(glm::transpose(closest_instance->object_from_world) * glm::vec4(closest_hit_info->normal, 0.f)));
-        closest_hit_info->material = &closest_instance->materail;
-    }
-
-    return closest_hit_info;
+    return scene_bvh.intersect(ray, t_min, t_max);
 }
