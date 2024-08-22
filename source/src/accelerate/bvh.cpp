@@ -17,6 +17,7 @@ void BVH::build(std::vector<Triangle> &&triangles) {
     std::cout << "Triangle Count: " << triangle_count << std::endl;
     std::cout << "Mean Leaf Node Triangle Count: " << static_cast<float>(triangle_count) / static_cast<float>(state.leaf_node_count) << std::endl;
     std::cout << "Max Leaf Node Triangle Count: " << state.max_leaf_node_triangle_count << std::endl;
+    std::cout << "Max Leaf Node Depth: " << state.max_leaf_node_depth << std::endl;
 
     nodes.reserve(state.total_node_count);
     ordered_triangles.reserve(triangle_count);
@@ -124,7 +125,6 @@ size_t BVH::recursiveFlatten(BVHTreeNode *node) {
         node->bounds,
         0,
         static_cast<uint16_t>(node->triangles.size()),
-        static_cast<uint8_t>(node->depth),
         static_cast<uint8_t>(node->split_axis),
     };
     auto idx = nodes.size();
@@ -183,7 +183,6 @@ std::optional<HitInfo> BVH::intersect(const Ray &ray, float t_min, float t_max) 
                 if (hit_info) {
                     t_max = hit_info->t;
                     closest_hit_info = hit_info;
-                    DEBUG_LINE(closest_hit_info->bounds_depth = node.depth)
                 }
             }
             if (ptr == stack.begin()) break;
@@ -191,10 +190,8 @@ std::optional<HitInfo> BVH::intersect(const Ray &ray, float t_min, float t_max) 
         }
     }
 
-    if (closest_hit_info.has_value()) {
-        DEBUG_LINE(closest_hit_info->bounds_test_count = bounds_test_count)
-        DEBUG_LINE(closest_hit_info->triangle_test_count = triangle_test_count)
-    }
+    DEBUG_LINE(ray.bounds_test_count += bounds_test_count)
+    DEBUG_LINE(ray.triangle_test_count += triangle_test_count)
 
     return closest_hit_info;
 }
