@@ -16,10 +16,10 @@ class ThreadPool {
 public:
     static void WorkerThread(ThreadPool *master);
 
-    ThreadPool(size_t thread_count = 0);
+    ThreadPool(std::size_t thread_count = 0);
     ~ThreadPool();
 
-    void parallelFor(size_t width, size_t height, const std::function<void(size_t, size_t)> &lambda, bool complex = true);
+    void parallelFor(std::size_t width, std::size_t height, const std::function<void(std::size_t, std::size_t)> &lambda, bool complex = true);
     void wait() const;
 
     void addTask(Task *task);

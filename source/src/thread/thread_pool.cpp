@@ -1,5 +1,8 @@
 #include "thread/thread_pool.hpp"
 
+#include <cmath>
+
+
 ThreadPool thread_pool {};
 
 void ThreadPool::WorkerThread(ThreadPool *master) {
@@ -19,13 +22,13 @@ void ThreadPool::WorkerThread(ThreadPool *master) {
     }
 }
 
-ThreadPool::ThreadPool(size_t thread_count) {
+ThreadPool::ThreadPool(std::size_t thread_count) {
     alive = 1;
     pending_task_count = 0;
     if (thread_count == 0) {
         thread_count = std::thread::hardware_concurrency();
     }
-    for (size_t i = 0; i < thread_count; i ++) {
+    for (std::size_t i = 0; i < thread_count; i ++) {
         threads.push_back(std::thread(ThreadPool::WorkerThread, this));
     }
 }
@@ -41,35 +44,35 @@ ThreadPool::~ThreadPool() {
 
 class ParallelForTask : public Task {
 public:
-    ParallelForTask(size_t x, size_t y, size_t chunk_width, size_t chunk_height, const std::function<void(size_t, size_t)> &lambda)
+    ParallelForTask(std::size_t x, std::size_t y, std::size_t chunk_width, std::size_t chunk_height, const std::function<void(std::size_t, std::size_t)> &lambda)
         : x(x), y(y), chunk_width(chunk_width), chunk_height(chunk_height), lambda(lambda) {}
 
     void run() override {
-        for (size_t idx_x = 0; idx_x < chunk_width; idx_x ++) {
-            for (size_t idx_y = 0; idx_y < chunk_height; idx_y ++) {
+        for (std::size_t idx_x = 0; idx_x < chunk_width; idx_x ++) {
+            for (std::size_t idx_y = 0; idx_y < chunk_height; idx_y ++) {
                 lambda(x + idx_x, y + idx_y);
             }
         }
     }
 private:
-    size_t x, y, chunk_width, chunk_height;
-    std::function<void(size_t, size_t)> lambda;
+    std::size_t x, y, chunk_width, chunk_height;
+    std::function<void(std::size_t, std::size_t)> lambda;
 };
 
-void ThreadPool::parallelFor(size_t width, size_t height, const std::function<void(size_t, size_t)> &lambda, bool complex) {
+void ThreadPool::parallelFor(std::size_t width, std::size_t height, const std::function<void(std::size_t, std::size_t)> &lambda, bool complex) {
     Guard guard(spin_lock);
 
-    float chunk_width_float = static_cast<float>(width) / sqrt(threads.size());
-    float chunk_height_float = static_cast<float>(height) / sqrt(threads.size());
+    float chunk_width_float = static_cast<float>(width) / std::sqrt(threads.size());
+    float chunk_height_float = static_cast<float>(height) / std::sqrt(threads.size());
     if (complex) {
-        chunk_width_float /= sqrt(16);
-        chunk_height_float /= sqrt(16);
+        chunk_width_float /= std::sqrt(16);
+        chunk_height_float /= std::sqrt(16);
     }
-    size_t chunk_width = std::ceil(chunk_width_float);
-    size_t chunk_height = std::ceil(chunk_height_float);
+    std::size_t chunk_width = std::ceil(chunk_width_float);
+    std::size_t chunk_height = std::ceil(chunk_height_float);
 
-    for (size_t x = 0; x < width; x += chunk_width) {
-        for (size_t y = 0; y < height; y += chunk_height) {
+    for (std::size_t x = 0; x < width; x += chunk_width) {
+        for (std::size_t y = 0; y < height; y += chunk_height) {
             pending_task_count ++;
             if (x + chunk_width > width) {
                 chunk_width = width - x;

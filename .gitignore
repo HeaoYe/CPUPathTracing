@@ -1,3 +1,8 @@
+.vscode
+
 build
+buildDebug
+buildRelease
+
 ~$*
 *.ppm
