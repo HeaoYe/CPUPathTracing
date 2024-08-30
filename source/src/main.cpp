@@ -6,6 +6,7 @@
 #include "util/rgb.hpp"
 #include "renderer/normal_renderer.hpp"
 #include "renderer/simple_rt_renderer.hpp"
+#include "renderer/path_tracing_renderer.hpp"
 #include "renderer/debug_renderer.hpp"
 
 int main() {
@@ -67,7 +68,10 @@ int main() {
     ttc_renderer.render(1, "TTC.ppm");
 
     SimpleRTRenderer simple_rt_renderer { camera, scene };
-    simple_rt_renderer.render(128, "test.ppm");
+    simple_rt_renderer.render(128, "RT_test.ppm");
+
+    PathTracingRenderer path_tracing_renderer { camera, scene };
+    path_tracing_renderer.render(128, "PT_cosine_test.ppm");
 
     return 0;
 }
