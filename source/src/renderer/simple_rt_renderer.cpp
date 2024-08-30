@@ -1,5 +1,6 @@
 #include "renderer/simple_rt_renderer.hpp"
 #include "util/frame.hpp"
+#include "sample/spherical.hpp"
 
 glm::vec3 SimpleRTRenderer::renderPixel(const glm::ivec2 &pixel_coord) {
     auto ray = camera.generateRay(pixel_coord, { rng.uniform(), rng.uniform() });
@@ -21,13 +22,7 @@ glm::vec3 SimpleRTRenderer::renderPixel(const glm::ivec2 &pixel_coord) {
                 glm::vec3 view_direction = frame.localFromWorld(-ray.direction);
                 light_direction = { -view_direction.x, view_direction.y, -view_direction.z };
             } else {
-                do {
-                    light_direction = { rng.uniform(), rng.uniform(), rng.uniform() };
-                    light_direction = light_direction * 2.f - 1.f;
-                } while(glm::length(light_direction) > 1);
-                if (light_direction.y < 0) {
-                    light_direction.y = -light_direction.y;
-                }
+                light_direction = UniformSampleHemisphere(rng);
             }
             ray.direction = frame.worldFromLocal(light_direction);
         } else {
