@@ -1,20 +1,21 @@
-#include "renderer/simple_rt_renderer.hpp"
+#include "renderer/path_tracing_renderer.hpp"
 #include "util/frame.hpp"
 #include "sample/spherical.hpp"
 
-glm::vec3 SimpleRTRenderer::renderPixel(const glm::ivec2 &pixel_coord) {
+glm::vec3 PathTracingRenderer::renderPixel(const glm::ivec2 &pixel_coord) {
     auto ray = camera.generateRay(pixel_coord, { rng.uniform(), rng.uniform() });
     glm::vec3 beta = { 1, 1, 1 };
-    glm::vec3 color = { 0, 0, 0 };
-    size_t max_bounce_count = 32;
+    glm::vec3 L = { 0, 0, 0 };
+    float q = 0.9;
 
-    while (max_bounce_count--) {
+    while (true) {
         auto hit_info = scene.intersect(ray);
         if (hit_info.has_value()) {
-            color += beta * hit_info->material->emissive;
-            beta *= hit_info->material->albedo;
-
-            ray.origin = hit_info->hit_point;
+            if (rng.uniform() > q) {
+                break;
+            }
+            L += beta * hit_info->material->emissive;
+            beta *= hit_info->material->albedo / q;
 
             Frame frame(hit_info->normal);
             glm::vec3 light_direction;
@@ -22,13 +23,15 @@ glm::vec3 SimpleRTRenderer::renderPixel(const glm::ivec2 &pixel_coord) {
                 glm::vec3 view_direction = frame.localFromWorld(-ray.direction);
                 light_direction = { -view_direction.x, view_direction.y, -view_direction.z };
             } else {
-                light_direction = UniformSampleHemisphere(rng);
+                light_direction = CosineSampleHemisphere({ rng.uniform(), rng.uniform() });
             }
+
+            ray.origin = hit_info->hit_point;
             ray.direction = frame.worldFromLocal(light_direction);
         } else {
             break;
         }
     }
 
-    return color;
+    return L;
 }
