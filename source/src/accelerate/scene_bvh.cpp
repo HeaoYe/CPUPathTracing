@@ -165,7 +165,7 @@ std::optional<HitInfo> SceneBVH::intersect(const Ray &ray, float t_min, float t_
 
     while (true) {
         auto &node = nodes[current_node_index];
-        DEBUG_LINE(bounds_test_count ++;)
+        DEBUG_LINE(bounds_test_count ++)
         if (!node.bounds.hasIntersection(ray, inv_direction, t_min, t_max)) {
             if (ptr == stack.begin()) break;
             current_node_index = *(--ptr);
