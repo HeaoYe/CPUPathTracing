@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../shape/material.hpp"
+#include "../material/material.hpp"
 #include "../util/debug_macro.hpp"
 #include <glm/glm.hpp>
 
