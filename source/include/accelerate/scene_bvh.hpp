@@ -5,7 +5,7 @@
 
 struct ShapeInstance {
     const Shape &shape;
-    Material materail;
+    const Material *materail;
     glm::mat4 world_from_object;
     glm::mat4 object_from_world;
 
