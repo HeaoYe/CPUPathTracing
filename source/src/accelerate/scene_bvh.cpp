@@ -214,7 +214,7 @@ std::optional<HitInfo> SceneBVH::intersect(const Ray &ray, float t_min, float t_
     if (closest_instance) {
         closest_hit_info->hit_point = closest_instance->world_from_object * glm::vec4(closest_hit_info->hit_point, 1.f);
         closest_hit_info->normal = glm::normalize(glm::vec3(glm::transpose(closest_instance->object_from_world) * glm::vec4(closest_hit_info->normal, 0.f)));
-        closest_hit_info->material = &closest_instance->materail;
+        closest_hit_info->material = closest_instance->materail;
     }
 
     DEBUG_LINE(ray.bounds_test_count += bounds_test_count)

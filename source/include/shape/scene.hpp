@@ -7,7 +7,7 @@ struct Scene : public Shape {
 public:
     void addShape(
         const Shape &shape,
-        const Material &material = {},
+        const Material *material = nullptr,
         const glm::vec3 &pos = { 0, 0, 0 },
         const glm::vec3 &scale = { 1, 1, 1 },
         const glm::vec3 &rotate = { 0, 0, 0 }
