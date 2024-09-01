@@ -21,7 +21,7 @@ glm::vec3 PathTracingRenderer::renderPixel(const glm::ivec2 &pixel_coord) {
             glm::vec3 light_direction;
             if (hit_info->material) {
                 glm::vec3 view_direction = frame.localFromWorld(-ray.direction);
-                light_direction = hit_info->material->sampleBRDF(view_direction, beta, rng);
+                light_direction = hit_info->material->sampleBSDF(hit_info->hit_point, view_direction, beta, rng);
             } else {
                 break;
             }
