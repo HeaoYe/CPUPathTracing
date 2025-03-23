@@ -175,3 +175,9 @@ int main() {
 
 // render 100 shape instances scene with SceneBVH
 // Profile "Render 128spp test.ppm": 7628ms
+
+// non thread local RNG
+// render 128spp：9827ms
+
+// thread local RNG
+// render 128spp：2917ms
