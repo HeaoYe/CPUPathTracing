@@ -43,7 +43,7 @@ public:
         if (t < 0 || t >= 1) {
             return RGB { 255, 0, 0 };
         }
-        float idx_float = t * color_pallet.size();
+        float idx_float = t * (color_pallet.size() - 1);
         size_t idx = glm::floor(idx_float);
         return Lerp(color_pallet[idx], color_pallet[idx + 1], glm::fract(idx_float));
     }
