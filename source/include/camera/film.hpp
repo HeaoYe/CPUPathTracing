@@ -19,6 +19,9 @@ public:
     size_t getHeight() const { return height; }
     Pixel getPixel(size_t x, size_t y) { return pixels[y * width + x]; }
     void addSample(size_t x, size_t y, const glm::vec3 &color) {
+        if (glm::any(glm::isnan(color))) {
+            return;
+        }
         pixels[y * width + x].color += color;
         pixels[y * width + x].sample_count ++;
     }
