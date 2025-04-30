@@ -9,13 +9,12 @@
 #include "material/dielectric_material.hpp"
 #include "material/conductor_material.hpp"
 #include "material/ground_material.hpp"
-#include "renderer/normal_renderer.hpp"
 #include "renderer/path_tracing_renderer.hpp"
-#include "renderer/debug_renderer.hpp"
+#include "renderer/previewer.hpp"
 
 int main() {
     Film film { 192 * 10, 108 * 10 };
-    Camera camera { film, { -9.5, 1.5, 0 }, { 0, 0, 0 }, 45 };
+    Camera camera { film, { -3.488137, 0.184000, -2.268835 }, { -4.255267, 0.356399, -1.650943 }, 68 };
 
     Model model("models/dragon_871k.obj");
     Sphere sphere {
@@ -73,16 +72,11 @@ int main() {
     scene.addShape(sphere, light_material, { -2, 6, 0 }, { 2, 2, 2 });
     scene.build();
 
-    NormalRenderer normal_renderer { camera, scene };
-    normal_renderer.render(1, "normal.ppm");
-
-    BoundsTestCountRenderer btc_renderer { camera, scene };
-    btc_renderer.render(1, "BTC.ppm");
-    TriangleTestCountRenderer ttc_renderer { camera, scene };
-    ttc_renderer.render(1, "TTC.ppm");
-
     PathTracingRenderer path_tracing_renderer { camera, scene };
-    path_tracing_renderer.render(4096, "PT_microfacet_test.ppm");
+    Previewer previewer(path_tracing_renderer);
+    if (previewer.preview()) {
+        path_tracing_renderer.render(4096, "PT_microfacet_test.ppm");
+    }
 
     return 0;
 }

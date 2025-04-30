@@ -12,6 +12,7 @@
     }; \
 
 class BaseRenderer {
+    friend class Previewer;
 public:
     BaseRenderer(Camera &camera, const Scene &scene) : camera(camera), scene(scene) {}
     void render(size_t spp, const std::filesystem::path &filename);
