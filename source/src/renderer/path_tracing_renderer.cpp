@@ -10,11 +10,16 @@ glm::vec3 PathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
     glm::vec3 beta = { 1, 1, 1 };
     glm::vec3 L = { 0, 0, 0 };
     float q = 0.9;
+    bool last_is_specular = true;
+    glm::vec3 last_surface_point = ray.origin;
 
     while (true) {
         auto hit_info = scene.intersect(ray);
         if (hit_info.has_value()) {
-            L += beta * hit_info->material->emissive;
+            if (last_is_specular && hit_info->material && hit_info->material->area_light) {
+                L += beta * hit_info->material->area_light->getRadiance(last_surface_point, hit_info->hit_point, hit_info->normal);
+            }
+            last_surface_point = hit_info->hit_point;
 
             if (rng.uniform() > q) {
                 break;
@@ -29,6 +34,22 @@ glm::vec3 PathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
                     ray.origin = hit_info->hit_point;
                     continue;
                 }
+
+                if (hit_info->material->isDeltaDistribution()) {
+                    last_is_specular = true;
+                } else {
+                    last_is_specular = false;
+                    auto light_source_sample = scene.getLightSampler().sample(rng.uniform());
+                    if (light_source_sample.has_value()) {
+                        auto light_sample = light_source_sample->light->sampleLight(hit_info->hit_point, scene.getRadius(), rng);
+                        if (light_sample.has_value() && (!scene.intersect({ hit_info->hit_point, light_sample->light_point - hit_info->hit_point }, 1e-5, 1.f - 1e-5))) {
+                            glm::vec3 light_direction_local = frame.localFromWorld(light_sample->light_direction);
+                            L += beta * hit_info->material->BSDF(hit_info->hit_point, light_direction_local, view_direction)
+                                * glm::abs(light_direction_local.y) * light_sample->Le / (light_sample->pdf * light_source_sample->prob);
+                        }
+                    }
+                }
+
                 auto bsdf_sample = hit_info->material->sampleBSDF(hit_info->hit_point, view_direction, rng);
                 if (!bsdf_sample.has_value()) {
                     break;
@@ -42,6 +63,12 @@ glm::vec3 PathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
             ray.origin = hit_info->hit_point;
             ray.direction = frame.worldFromLocal(light_direction);
         } else {
+            if (last_is_specular) {
+                for (const auto *infinite_light : scene.getInfiniteLights()) {
+                    glm::vec3 light_direction = glm::normalize(ray.direction);
+                    L += beta * infinite_light->getRadiance(last_surface_point, last_surface_point + scene.getRadius() * 2 * light_direction, -light_direction);
+                }
+            }
             break;
         }
     }
