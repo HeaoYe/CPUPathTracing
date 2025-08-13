@@ -22,6 +22,15 @@ void BVH::build(std::vector<Triangle> &&triangles) {
     nodes.reserve(state.total_node_count);
     ordered_triangles.reserve(triangle_count);
     recursiveFlatten(root);
+
+    area = 0;
+    std::vector<float> areas;
+    areas.reserve(ordered_triangles.size());
+    for (const auto &triangle : ordered_triangles) {
+        areas.push_back(triangle.getArea());
+        area += areas.back();
+    }
+    alias_table.build(areas);
 }
 
 void BVH::recursiveSplit(BVHTreeNode *node, BVHState &state) {
@@ -194,4 +203,11 @@ std::optional<HitInfo> BVH::intersect(const Ray &ray, float t_min, float t_max) 
     DEBUG_LINE(ray.triangle_test_count += triangle_test_count)
 
     return closest_hit_info;
+}
+
+std::optional<ShapeSample> BVH::sampleShape(const RNG &rng) const {
+    auto sample_result = alias_table.sample(rng.uniform());
+    const auto &triangle = ordered_triangles[sample_result.index];
+    auto triangle_sample = triangle.sampleShape(rng);
+    return ShapeSample { triangle_sample->point, triangle_sample->normal, triangle_sample->pdf * sample_result.prob };
 }

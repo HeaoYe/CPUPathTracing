@@ -1,7 +1,7 @@
 #pragma once
 
 #include "bounds.hpp"
-#include "../shape/shape.hpp"
+#include "shape/shape.hpp"
 
 struct ShapeInstance {
     const Shape &shape;

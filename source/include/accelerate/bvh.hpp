@@ -1,7 +1,8 @@
 #pragma once
 
 #include "bounds.hpp"
-#include "../shape/triangle.hpp"
+#include "shape/triangle.hpp"
+#include "sample/alias_table.hpp"
 
 struct BVHTreeNode {
     Bounds bounds {};
@@ -69,6 +70,8 @@ public:
     void build(std::vector<Triangle> &&triangles);
     std::optional<HitInfo> intersect(const Ray &ray, float t_min, float t_max) const override;
     Bounds getBounds() const override { return nodes[0].bounds; }
+    float getArea() const override { return area; }
+    std::optional<ShapeSample> sampleShape(const RNG &rng) const override;
 private:
     void recursiveSplit(BVHTreeNode *node, BVHState &state);
     size_t recursiveFlatten(BVHTreeNode *node);
@@ -77,4 +80,6 @@ private:
     BVHTreeNode *root;
     std::vector<BVHNode> nodes;
     std::vector<Triangle> ordered_triangles;
+    float area;
+    AliasTable alias_table;
 };

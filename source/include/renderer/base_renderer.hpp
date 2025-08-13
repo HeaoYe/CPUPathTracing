@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../camera/camera.hpp"
-#include "../shape/scene.hpp"
+#include "camera/camera.hpp"
+#include "shape/scene.hpp"
 
 #define DEFINE_RENDERER(Name) \
     class Name##Renderer : public BaseRenderer { \

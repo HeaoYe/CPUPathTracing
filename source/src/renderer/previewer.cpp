@@ -50,6 +50,9 @@ bool Previewer::preview() {
                     printf("FPS: %f\n", fps);
                 } else if (key_released->scancode == sf::Keyboard::Scancode::Hyphen) {
                     fps -= 1;
+                    if (fps <= 0) {
+                        fps = 1;
+                    }
                     printf("FPS: %f\n", fps);
                 } else if (key_released->scancode == sf::Keyboard::Scancode::CapsLock) {
                     grabbed = !grabbed;
