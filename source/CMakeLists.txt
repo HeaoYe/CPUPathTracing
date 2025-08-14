@@ -9,4 +9,4 @@ target_compile_definitions(CPUPathTracing PUBLIC GLM_FORCE_DEPTH_ZERO_TO_ONE GLM
 
 target_compile_definitions(CPUPathTracing PUBLIC WITH_DEBUG_INFO)
 
-target_link_libraries(CPUPathTracing glm rapidobj)
+target_link_libraries(CPUPathTracing glm rapidobj sfml-graphics)
