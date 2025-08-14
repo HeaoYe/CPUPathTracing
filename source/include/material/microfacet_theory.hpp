@@ -1,7 +1,7 @@
 #pragma once
 
-#include <glm/glm.hpp>
 #include "util/rng.hpp"
+#include <glm/glm.hpp>
 
 class MicrofacetTheory {
     // Smith Models
@@ -16,7 +16,7 @@ public:
     float visibleNormalDistribution(const glm::vec3 &view_direction, const glm::vec3 &microfacet_normal) const;
     glm::vec3 sampleVisibleNormal(const glm::vec3 &view_direction, const RNG &rng) const;
 
-    bool isDeltaDistibution() const;
+    bool isDeltaDistribution() const;
 private:
     float slopeDistribution(const glm::vec2 &slope) const;
     float Lambda(const glm::vec3 &direction_upper) const;

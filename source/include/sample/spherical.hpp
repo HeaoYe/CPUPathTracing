@@ -32,3 +32,12 @@ inline glm::vec3 UniformSampleHemisphere(const RNG &rng) {
     }
     return glm::normalize(result);
 }
+
+inline glm::vec3 UniformSampleSphere(const RNG &rng) {
+    glm::vec3 result;
+    do {
+        result = { rng.uniform(), rng.uniform(), rng.uniform() };
+        result = result * 2.f - 1.f;
+    } while(glm::length(result) > 1);
+    return glm::normalize(result);
+}

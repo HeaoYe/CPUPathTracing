@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../material/material.hpp"
-#include "../util/debug_macro.hpp"
+#include "material/material.hpp"
+#include "util/debug_macro.hpp"
 #include <glm/glm.hpp>
 
 struct Ray {
