@@ -4,3 +4,6 @@
 [submodule "thirdparty/rapidobj"]
 	path = thirdparty/rapidobj
 	url = https://github.com/guybrush77/rapidobj
+[submodule "thirdparty/SFML"]
+	path = thirdparty/SFML
+	url = https://github.com/SFML/SFML
