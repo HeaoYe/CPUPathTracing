@@ -14,7 +14,7 @@
 
 int main() {
     Film film { 192 * 10, 108 * 10 };
-    Camera camera { film, { -3.488137, 0.184000, -2.268835 }, { -4.255267, 0.356399, -1.650943 }, 68 };
+    Camera camera { film, { -10, 1.5, 0 }, { 0, 0.5, 0 }, 45 };
 
     Model model("models/dragon_871k.obj");
     Sphere sphere {
@@ -23,7 +23,8 @@ int main() {
     };
     Plane plane {
         { 0, 0, 0 },
-        { 0, 1, 0 }
+        { 0, 1, 0 },
+        10.f
     };
 
     Scene scene {};
@@ -67,15 +68,19 @@ int main() {
         { 2, 2, 2 }
     );
     scene.addShape(plane, new GroundMaterial { RGB(120, 204, 157) }, { 0, -0.5, 0 });
-    auto *light_material = new DiffuseMaterial { { 1, 1, 1 } };
-    light_material->setEmissive({ 0.95 * 5, 0.95 * 5, 1 * 5 });
-    scene.addShape(sphere, light_material, { -2, 6, 0 }, { 2, 2, 2 });
+    // auto *light_material = new DiffuseMaterial { { 1, 1, 1 } };
+    // light_material->setEmissive({ 0.95 * 5, 0.95 * 5, 1 * 5 });
+    // scene.addShape(sphere, light_material, { -2, 6, 0 }, { 0.5, 0.5, 0.5 });
+    Sphere light_sphere { { -2, 6, 0 }, 0.5f };
+    AreaLight *area_light = new AreaLight { light_sphere, { 0.95 * 100, 0.95 * 100, 1 * 100 }, false };
+    scene.addAreaLight(area_light, new DiffuseMaterial {});
+    scene.addInfiniteLight(new InfiniteLight { { 0.9, 0.9, 0.7 } });
     scene.build();
 
     PathTracingRenderer path_tracing_renderer { camera, scene };
     Previewer previewer(path_tracing_renderer);
     if (previewer.preview()) {
-        path_tracing_renderer.render(4096, "PT_microfacet_test.ppm");
+        path_tracing_renderer.render(32, "PT_with_sample_light.ppm");
     }
 
     return 0;
