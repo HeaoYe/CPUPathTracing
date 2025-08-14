@@ -62,7 +62,7 @@ glm::vec3 MicrofacetTheory::sampleVisibleNormal(const glm::vec3 &view_direction,
     return glm::normalize(glm::vec3(alpha_x * microfacet_normal_hemi.x, microfacet_normal_hemi.y, alpha_z * microfacet_normal_hemi.z));
 }
 
-bool MicrofacetTheory::isDeltaDistibution() const {
+bool MicrofacetTheory::isDeltaDistribution() const {
     return glm::max(alpha_x, alpha_z) == 1e-3f;
 }
 

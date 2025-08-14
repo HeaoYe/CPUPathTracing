@@ -9,6 +9,9 @@ struct Sphere : public Shape {
 
     Bounds getBounds() const override { return { center - radius, center + radius }; }
 
+    float getArea() const override;
+    std::optional<ShapeSample> sampleShape(const RNG &rng) const override;
+
     glm::vec3 center;
     float radius;
 };
