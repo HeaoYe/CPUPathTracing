@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 
 void AliasTable::build(const std::vector<float> &values) {
-    float sum = 0;
+    double sum = 0;
     for (float value : values) {
         sum += value;
     }
@@ -32,7 +32,7 @@ void AliasTable::build(const std::vector<float> &values) {
 
         item_l.q = item_l.p;
         item_l.alias = item_g_idx;
-        item_g.p -= 1.f - item_l.q;
+        item_g.p -= 1. - item_l.q;
 
         if (item_g.p < 1) {
             less.push_back(item_g_idx);
@@ -43,10 +43,10 @@ void AliasTable::build(const std::vector<float> &values) {
 }
 
 AliasTable::SampleResult AliasTable::sample(float u) const {
-    int idx = glm::floor(glm::clamp<int>(u * items.size(), 0, items.size() - 1));
+    size_t idx = glm::floor(glm::clamp<size_t>(u * items.size(), 0, items.size() - 1));
     u = glm::clamp<float>(u * items.size() - idx, 0, 1);
     const auto &item = items[idx];
-    if (u <= item.q) {
+    if ((item.q == 1) || (u < item.q)) {
         return SampleResult { idx, probs[idx] };
     }
     return { item.alias, probs[item.alias] };
