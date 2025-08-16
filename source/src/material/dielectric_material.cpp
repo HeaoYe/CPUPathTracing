@@ -39,10 +39,10 @@ std::optional<BSDFSample> DielectricMaterial::sampleBSDF(const glm::vec3 &hit_po
         if (microfacet_theory.isDeltaDistribution()) {
             return BSDFSample { albedo_r / glm::abs(light_direction.y), 1, light_direction };
         }
-        glm::vec3 brdf = albedo_r * microfacet_theory.normalDistribution(microfacet_normal)
+        glm::vec3 brdf = fr * albedo_r * microfacet_theory.normalDistribution(microfacet_normal)
             * microfacet_theory.heightCorrelatedMaskingShadowing(light_direction, view_direction, microfacet_normal)
             / glm::abs(4.f * light_direction.y * view_direction.y);
-        float pdf = microfacet_theory.visibleNormalDistribution(view_direction, microfacet_normal) / glm::abs(4.f * glm::dot(view_direction, microfacet_normal));
+        float pdf = fr * microfacet_theory.visibleNormalDistribution(view_direction, microfacet_normal) / glm::abs(4.f * glm::dot(view_direction, microfacet_normal));
         return BSDFSample { brdf, pdf, light_direction };
     } else {
         glm::vec3 light_direction { (-view_direction / etai_div_etat ) + (cos_theta_t / etai_div_etat - cos_theta_i) * scale * microfacet_normal };
@@ -51,11 +51,11 @@ std::optional<BSDFSample> DielectricMaterial::sampleBSDF(const glm::vec3 &hit_po
                 glm::abs(glm::dot(view_direction, microfacet_normal)) - etai_div_etat * etai_div_etat * glm::abs(glm::dot(light_direction, microfacet_normal))
                 , 2
             );
-        glm::vec3 btdf = albedo_t * det_J * microfacet_theory.normalDistribution(microfacet_normal)
+        glm::vec3 btdf = (1.f - fr) * albedo_t * det_J * microfacet_theory.normalDistribution(microfacet_normal)
             * microfacet_theory.heightCorrelatedMaskingShadowing(light_direction, view_direction, microfacet_normal)
             * glm::abs(glm::dot(view_direction, microfacet_normal) / (light_direction.y * view_direction.y));
-        float pdf = microfacet_theory.visibleNormalDistribution(view_direction, microfacet_normal) * det_J;
-        return BSDFSample { btdf / (etai_div_etat * etai_div_etat), pdf, light_direction };
+        float pdf = (1.f - fr) * microfacet_theory.visibleNormalDistribution(view_direction, microfacet_normal) * det_J;
+        return BSDFSample { btdf / (etai_div_etat * etai_div_etat), pdf, light_direction, etai_div_etat * etai_div_etat };
     }
 }
 
@@ -99,4 +99,40 @@ glm::vec3 DielectricMaterial::BSDF(const glm::vec3 &hit_point, const glm::vec3 &
         * microfacet_theory.heightCorrelatedMaskingShadowing(light_direction, view_direction, microfacet_normal)
         / glm::abs(4.f * lv);
     return brdf;
+}
+
+float DielectricMaterial::PDF(const glm::vec3 &hit_point, const glm::vec3 &light_direction, const glm::vec3 &view_direction) const {
+    if (isDeltaDistribution()) {
+        return 0;
+    }
+    float lv = light_direction.y * view_direction.y;
+    if (lv == 0) {
+        return 0;
+    }
+
+    float etai_div_etat = ior;
+    float cos_theta_t = view_direction.y;
+    float scale = 1;
+    if (cos_theta_t < 0) {
+        etai_div_etat = 1.f / ior;
+        scale = -1;
+        cos_theta_t = -cos_theta_t;
+    }
+    float cos_theta_i;
+    float fr = Fresnel(etai_div_etat, cos_theta_t, cos_theta_i);
+
+    if (lv < 0) {
+        glm::vec3 microfacet_normal = (light_direction + view_direction / etai_div_etat) * scale / ((cos_theta_t / etai_div_etat - cos_theta_i));
+        float det_J = etai_div_etat * etai_div_etat * glm::abs(glm::dot(light_direction, microfacet_normal))
+            / glm::pow(
+                glm::abs(glm::dot(view_direction, microfacet_normal)) - etai_div_etat * etai_div_etat * glm::abs(glm::dot(light_direction, microfacet_normal))
+                , 2
+            );
+        return (1.f - fr) * microfacet_theory.visibleNormalDistribution(view_direction, microfacet_normal) * det_J;
+    }
+    glm::vec3 microfacet_normal = glm::normalize(light_direction + view_direction);
+    if (microfacet_normal.y < 0) {
+        microfacet_normal = -microfacet_normal;
+    }
+    return fr * microfacet_theory.visibleNormalDistribution(view_direction, microfacet_normal) / glm::abs(4.f * glm::dot(view_direction, microfacet_normal));
 }

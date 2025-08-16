@@ -10,78 +10,67 @@
 #include "material/conductor_material.hpp"
 #include "material/ground_material.hpp"
 #include "renderer/path_tracing_renderer.hpp"
+#include "renderer/simple_path_tracing_renderer.hpp"
 #include "renderer/previewer.hpp"
 
 int main() {
     Film film { 192 * 10, 108 * 10 };
-    Camera camera { film, { -10, 1.5, 0 }, { 0, 0.5, 0 }, 45 };
-
-    Model model("models/dragon_871k.obj");
-    Sphere sphere {
-        { 0, 0, 0 },
-        1
-    };
-    Plane plane {
-        { 0, 0, 0 },
-        { 0, 1, 0 },
-        10.f
-    };
+    glm::vec3 camera_pos = { 0, 37, -61 };
+    Camera camera { film, camera_pos, { 0, 8, 0 }, 16 };
 
     Scene scene {};
-    for (int i = -3; i <= 3; i ++) {
-        scene.addShape(
-            sphere,
-            new DielectricMaterial {
-                1.f + 0.2f * (i + 3),
-                { 1, 1, 1 },
-                (3.f - i) / 18.f,
-                (3.f - i) / 6.f,
-            },
-            { 0, 0.5, i * 2 },
-            { 0.8, 0.8, 0.8 }
-        );
+    Triangle triangles[] = {
+        { { -17, 0, -1.5 }, { -17, 0, 1.5 }, { 17, 0, 1.5 } },
+        { { -17, 0, -1.5 }, { 17, 0, 1.5 }, { 17, 0, -1.5 } },
+    };
+    Sphere light_sphere_1 { { -15 + 00 / 3, 12, 8 }, 2 };
+    Sphere light_sphere_2 { { -15 + 30 / 3, 12, 8 }, 1 };
+    Sphere light_sphere_3 { { -15 + 60 / 3, 12, 8 }, 0.5 };
+    Sphere light_sphere_4 { { -15 + 90 / 3, 12, 8 }, 0.1 };
+    AreaLight area_light_1 { light_sphere_1, { 1, 1, 1 }, false };
+    AreaLight area_light_2 { light_sphere_2, { 4, 4, 4 }, false };
+    AreaLight area_light_3 { light_sphere_3, { 16, 16, 16 }, false };
+    AreaLight area_light_4 { light_sphere_4, { 400, 400, 400 }, false };
+    scene.addAreaLight(&area_light_1, new DiffuseMaterial {});
+    scene.addAreaLight(&area_light_2, new DiffuseMaterial {});
+    scene.addAreaLight(&area_light_3, new DiffuseMaterial {});
+    scene.addAreaLight(&area_light_4, new DiffuseMaterial {});
+    glm::vec3 light_pos_center = { 0, 12, 8 };
+
+    float alphas[] = { 0.4, 0.25, 0.16, 0.04 };
+    for (size_t i = 0; i < 4; i ++) {
+        float theta = glm::radians(i * 15.f);
+        glm::vec3 center { 0, 17 * (1 - glm::cos(theta)), 17 * glm::sin(theta) };
+        glm::vec3 normal = glm::normalize(glm::normalize(light_pos_center - center) + glm::normalize(camera_pos - center));
+        float rotate_x = -glm::degrees(glm::acos(normal.y));
+        ConductorMaterial *surface_material = new ConductorMaterial { { 2, 2, 1 }, { 3, 3, 15 }, alphas[i], alphas[i] };
+        scene.addShape(triangles[0], surface_material, center, { 1, 1, 1 }, { rotate_x, 0, 0 });
+        scene.addShape(triangles[1], surface_material, center, { 1, 1, 1 }, { rotate_x, 0, 0 });
     }
-    for (int i = -3; i <= 3; i ++) {
-        glm::vec3 c = RGB::GenerateHeatmapRGB((i + 3.f) / 6.f);
-        scene.addShape(
-            sphere,
-            new ConductorMaterial {
-                glm::vec3(2.f - c * 2.f),
-                glm::vec3(2.f + c * 3.f),
-                (3.f - i) / 6.f,
-                (3.f - i) / 18.f,
-            },
-            { 0, 2.5, i * 2 },
-            { 0.8, 0.8, 0.8 }
-        );
-    }
-    scene.addShape(
-        model,
-        new DielectricMaterial { 1.8, RGB(128, 211, 131), 0.4, 0.4 },
-        { -5, 0.4, 1.5 },
-        { 2, 2, 2 }
-    );
-    scene.addShape(
-        model,
-        new ConductorMaterial { { 0.1, 1.2, 1.8 }, { 5, 2.5, 2 }, 0.4, 0.4 },
-        { -5, 0.4, -1.5 },
-        { 2, 2, 2 }
-    );
-    scene.addShape(plane, new GroundMaterial { RGB(120, 204, 157) }, { 0, -0.5, 0 });
-    // auto *light_material = new DiffuseMaterial { { 1, 1, 1 } };
-    // light_material->setEmissive({ 0.95 * 5, 0.95 * 5, 1 * 5 });
-    // scene.addShape(sphere, light_material, { -2, 6, 0 }, { 0.5, 0.5, 0.5 });
-    Sphere light_sphere { { -2, 6, 0 }, 0.5f };
-    AreaLight *area_light = new AreaLight { light_sphere, { 0.95 * 100, 0.95 * 100, 1 * 100 }, false };
-    scene.addAreaLight(area_light, new DiffuseMaterial {});
-    scene.addInfiniteLight(new InfiniteLight { { 0.9, 0.9, 0.7 } });
+
+    Plane ground {
+        { 0, -0.5, 0 },
+        { 0, 1, 0 },
+        100
+    };
+    Plane wall {
+        { 0, 0, 15 },
+        { 0, 0, -1 },
+        100
+    };
+    scene.addShape(ground, new GroundMaterial { { 1, 1, 1 } });
+    scene.addShape(wall, new DiffuseMaterial { { 1, 1, 1 } });
+    scene.addInfiniteLight(new InfiniteLight { { 0.5, 0.5, 0.5 } });
+
     scene.build();
 
     PathTracingRenderer path_tracing_renderer { camera, scene };
     Previewer previewer(path_tracing_renderer);
     if (previewer.preview()) {
-        path_tracing_renderer.render(32, "PT_with_sample_light.ppm");
+        path_tracing_renderer.render(32, "PT_MIS_TEST.ppm");
     }
+    // SimplePathTracingRenderer simple_path_tracing_renderer { camera, scene };
+    // simple_path_tracing_renderer.render(256, "PT_MIS_TEST_SAMPLE_LIGHT.ppm");
 
     return 0;
 }
