@@ -15,4 +15,5 @@ struct Shape {
     virtual Bounds getBounds() const { return {}; }
     virtual float getArea() const { return -1; }
     virtual std::optional<ShapeSample> sampleShape(const RNG &rng) const { return {}; }
+    virtual float PDF(const glm::vec3 &point, const glm::vec3 &normal) const { return 1.f / getArea(); }
 };
