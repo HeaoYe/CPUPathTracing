@@ -54,3 +54,19 @@ glm::vec3 ConductorMaterial::BSDF(const glm::vec3 &hit_point, const glm::vec3 &l
         / glm::abs(4.f * lv);
     return brdf;
 }
+
+float ConductorMaterial::PDF(const glm::vec3 &hit_point, const glm::vec3 &light_direction, const glm::vec3 &view_direction) const {
+    if (microfacet_theory.isDeltaDistribution()) {
+        return 0;
+    }
+    float lv = light_direction.y * view_direction.y;
+    if (lv <= 0) {
+        return 0;
+    }
+
+    glm::vec3 microfacet_normal = glm::normalize(light_direction + view_direction);
+    if (microfacet_normal.y < 0) {
+        microfacet_normal = -microfacet_normal;
+    }
+    return microfacet_theory.visibleNormalDistribution(view_direction, microfacet_normal) / glm::abs(4.f * glm::dot(view_direction, microfacet_normal));
+}

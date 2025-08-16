@@ -5,21 +5,22 @@
 class AliasTable {
 private:
     struct Item {
-        float q;
+        double q;
         union {
-            float p;
-            int alias;
+            double p;
+            size_t alias;
         };
     };
 
     struct SampleResult {
-        int index;
+        size_t index;
         float prob;
     };
 public:
     AliasTable() = default;
     void build(const std::vector<float> &values);
     SampleResult sample(float u) const;
+    const std::vector<float> &getProbs() const { return probs; }
 private:
     std::vector<float> probs;
     std::vector<Item> items;
