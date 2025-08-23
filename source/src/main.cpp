@@ -9,58 +9,66 @@
 #include "material/dielectric_material.hpp"
 #include "material/conductor_material.hpp"
 #include "material/ground_material.hpp"
+#include "light/uniform_infinite_light.hpp"
 #include "renderer/path_tracing_renderer.hpp"
 #include "renderer/simple_path_tracing_renderer.hpp"
 #include "renderer/previewer.hpp"
 
 int main() {
     Film film { 192 * 10, 108 * 10 };
-    glm::vec3 camera_pos = { 0, 37, -61 };
-    Camera camera { film, camera_pos, { 0, 8, 0 }, 16 };
+    Camera camera { film, { 0, 1.25, -6 }, { 0, 1.95, 0 }, 45 };
 
     Scene scene {};
-    Triangle triangles[] = {
-        { { -17, 0, -1.5 }, { -17, 0, 1.5 }, { 17, 0, 1.5 } },
-        { { -17, 0, -1.5 }, { 17, 0, 1.5 }, { 17, 0, -1.5 } },
-    };
-    Sphere light_sphere_1 { { -15 + 00 / 3, 12, 8 }, 2 };
-    Sphere light_sphere_2 { { -15 + 30 / 3, 12, 8 }, 1 };
-    Sphere light_sphere_3 { { -15 + 60 / 3, 12, 8 }, 0.5 };
-    Sphere light_sphere_4 { { -15 + 90 / 3, 12, 8 }, 0.1 };
-    AreaLight area_light_1 { light_sphere_1, { 1, 1, 1 }, false };
-    AreaLight area_light_2 { light_sphere_2, { 4, 4, 4 }, false };
-    AreaLight area_light_3 { light_sphere_3, { 16, 16, 16 }, false };
-    AreaLight area_light_4 { light_sphere_4, { 400, 400, 400 }, false };
-    scene.addAreaLight(&area_light_1, new DiffuseMaterial {});
-    scene.addAreaLight(&area_light_2, new DiffuseMaterial {});
-    scene.addAreaLight(&area_light_3, new DiffuseMaterial {});
-    scene.addAreaLight(&area_light_4, new DiffuseMaterial {});
-    glm::vec3 light_pos_center = { 0, 12, 8 };
 
-    float alphas[] = { 0.4, 0.25, 0.16, 0.04 };
-    for (size_t i = 0; i < 4; i ++) {
-        float theta = glm::radians(i * 15.f);
-        glm::vec3 center { 0, 17 * (1 - glm::cos(theta)), 17 * glm::sin(theta) };
-        glm::vec3 normal = glm::normalize(glm::normalize(light_pos_center - center) + glm::normalize(camera_pos - center));
-        float rotate_x = -glm::degrees(glm::acos(normal.y));
-        ConductorMaterial *surface_material = new ConductorMaterial { { 2, 2, 1 }, { 3, 3, 15 }, alphas[i], alphas[i] };
-        scene.addShape(triangles[0], surface_material, center, { 1, 1, 1 }, { rotate_x, 0, 0 });
-        scene.addShape(triangles[1], surface_material, center, { 1, 1, 1 }, { rotate_x, 0, 0 });
-    }
+    Model model("models/buddha.obj");
+    scene.addShape(
+        model,
+        new SpecularMaterial { RGB(241, 191, 79) },
+        { -3, 1.75, 0 },
+        { 4, 4, 4 }
+    );
+    scene.addShape(
+        model,
+        new ConductorMaterial {
+            { 1.2, 1.2, 5.3 },
+            { 3.4, 3.4, 2.1 },
+            0.8, 0.2
+        },
+        { -1, 1.75, 0 },
+        { 4, 4, 4 }
+    );
+    scene.addShape(
+        model,
+        new DielectricMaterial {
+            1.4,
+            { 1, 1, 1 },
+            RGB(180, 180, 154),
+            0.1, 0.3
+        },
+        { 1, 1.75, 0 },
+        { 4, 4, 4 }
+    );
+    scene.addShape(
+        model,
+        new DiffuseMaterial { RGB(241, 191, 79) },
+        { 3, 1.75, 0 },
+        { 4, 4, 4 }
+    );
+
+    Sphere sphere {
+        { 0, 0, 0 },
+        1
+    };
+    scene.addShape(sphere, new SpecularMaterial { { 1, 1, 1 } }, { 0, 3.75, 3 });
 
     Plane ground {
-        { 0, -0.5, 0 },
+        { 0, 0, 0 },
         { 0, 1, 0 },
         100
     };
-    Plane wall {
-        { 0, 0, 15 },
-        { 0, 0, -1 },
-        100
-    };
     scene.addShape(ground, new GroundMaterial { { 1, 1, 1 } });
-    scene.addShape(wall, new DiffuseMaterial { { 1, 1, 1 } });
-    scene.addInfiniteLight(new InfiniteLight { { 0.5, 0.5, 0.5 } });
+
+    scene.addInfiniteLight(new UniformInfiniteLight { { 0.5, 0.5, 0.5 } });
 
     scene.build();
 
@@ -69,8 +77,6 @@ int main() {
     if (previewer.preview()) {
         path_tracing_renderer.render(32, "PT_MIS_TEST.ppm");
     }
-    // SimplePathTracingRenderer simple_path_tracing_renderer { camera, scene };
-    // simple_path_tracing_renderer.render(256, "PT_MIS_TEST_SAMPLE_LIGHT.ppm");
 
     return 0;
 }
@@ -176,3 +182,15 @@ int main() {
 
 // thread local RNG
 // render 128spp：2917ms
+
+// before optimize bvh
+// Load buddha.obj 1084k：7871ms
+
+// remove triangle indices cache
+// Load buddha.obj 1084k：2807ms
+
+// order triangle list
+// Load buddha.obj 1084k：1337ms
+
+// parallel build bvh
+// Load buddha.obj 1084k：587ms
