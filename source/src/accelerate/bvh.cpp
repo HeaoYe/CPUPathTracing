@@ -1,16 +1,25 @@
 #include "accelerate/bvh.hpp"
 #include "util/debug_macro.hpp"
+#include "thread/thread_pool.hpp"
 #include <array>
 #include <iostream>
 
 void BVH::build(std::vector<Triangle> &&triangles) {
+    ordered_triangles = std::move(triangles);
+
     root = allocator.allocate();
-    root->triangles = std::move(triangles);
-    root->updateBounds();
+    root->start = 0;
+    root->end = ordered_triangles.size();
+    root->bounds = {};
+    for (const auto &triangle : ordered_triangles) {
+        root->bounds.expand(triangle.getBounds());
+    }
     root->depth = 1;
+
     BVHState state {};
-    size_t triangle_count = root->triangles.size();
+    size_t triangle_count = ordered_triangles.size();
     recursiveSplit(root, state);
+    thread_pool.wait();
 
     std::cout << "Total Node Count: " << state.total_node_count << std::endl;
     std::cout << "Leaf Node Count: " << state.leaf_node_count << std::endl;
@@ -20,7 +29,6 @@ void BVH::build(std::vector<Triangle> &&triangles) {
     std::cout << "Max Leaf Node Depth: " << state.max_leaf_node_depth << std::endl;
 
     nodes.reserve(state.total_node_count);
-    ordered_triangles.reserve(triangle_count);
     recursiveFlatten(root);
 
     area = 0;
@@ -35,7 +43,7 @@ void BVH::build(std::vector<Triangle> &&triangles) {
 
 void BVH::recursiveSplit(BVHTreeNode *node, BVHState &state) {
     state.total_node_count ++;
-    if (node->triangles.size() == 1 || node->depth > 32) {
+    if (((node->end - node->start) == 1) || (node->depth > 32)) {
         state.addLeafNode(node);
         return;
     }
@@ -46,13 +54,12 @@ void BVH::recursiveSplit(BVHTreeNode *node, BVHState &state) {
     Bounds min_child0_bounds {}, min_child1_bounds {};
     size_t min_child0_triangle_count = 0, min_child1_triangle_count = 0;
     constexpr size_t bucket_count = 12;
-    std::vector<size_t> triangle_indices_buckets[3][bucket_count] = {};
     for (size_t axis = 0; axis < 3; axis ++) {
         Bounds bounds_buckets[bucket_count] = {};
         size_t triangle_count_buckets[bucket_count] = {};
-        size_t triangle_idx = 0;
-        for (const auto &triangle : node->triangles) {
-            auto triangle_center = (triangle.p0[axis] + triangle.p1[axis] + triangle.p2[axis]) / 3.f;
+        for (size_t triangle_idx = node->start; triangle_idx < node->end; triangle_idx ++) {
+            Triangle triangle = ordered_triangles[triangle_idx];
+            float triangle_center = (triangle.p0[axis] + triangle.p1[axis] + triangle.p2[axis]) / 3.f;
             size_t bucket_idx = glm::clamp<size_t>(
                 glm::floor((triangle_center - node->bounds.b_min[axis]) * bucket_count / diag[axis]),
                 0, bucket_count - 1
@@ -61,8 +68,6 @@ void BVH::recursiveSplit(BVHTreeNode *node, BVHState &state) {
             bounds_buckets[bucket_idx].expand(triangle.p1);
             bounds_buckets[bucket_idx].expand(triangle.p2);
             triangle_count_buckets[bucket_idx] ++;
-            triangle_indices_buckets[axis][bucket_idx].push_back(triangle_idx);
-            triangle_idx ++;
         }
 
         Bounds left_bounds = bounds_buckets[0];
@@ -104,36 +109,70 @@ void BVH::recursiveSplit(BVHTreeNode *node, BVHState &state) {
     node->children[0] = child0;
     node->children[1] = child1;
 
-    child0->triangles.reserve(min_child0_triangle_count);
-    child1->triangles.reserve(min_child1_triangle_count);
-    for (size_t i = 0; i < min_split_index; i ++) {
-        for (size_t idx : triangle_indices_buckets[node->split_axis][i]) {
-            child0->triangles.push_back(node->triangles[idx]);
-        }
-    }
-    for (size_t i = min_split_index; i < bucket_count; i ++) {
-        for (size_t idx : triangle_indices_buckets[node->split_axis][i]) {
-            child1->triangles.push_back(node->triangles[idx]);
-        }
-    }
+    size_t head_ptr = node->start;
+    size_t tail_ptr = node->end - 1;
 
-    node->triangles.clear();
-    node->triangles.shrink_to_fit();
+    while (head_ptr <= tail_ptr) {
+        Triangle triangle_head = ordered_triangles[head_ptr];
+        auto triangle_center_head = (triangle_head.p0[node->split_axis] + triangle_head.p1[node->split_axis] + triangle_head.p2[node->split_axis]) / 3.f;
+        size_t bucket_idx_head = glm::clamp<size_t>(
+            glm::floor((triangle_center_head - node->bounds.b_min[node->split_axis]) * bucket_count / diag[node->split_axis]),
+            0, bucket_count - 1
+        );
+        bool head_is_child0 = bucket_idx_head < min_split_index;
+
+        Triangle triangle_tail = ordered_triangles[tail_ptr];
+        auto triangle_center_tail = (triangle_tail.p0[node->split_axis] + triangle_tail.p1[node->split_axis] + triangle_tail.p2[node->split_axis]) / 3.f;
+        size_t bucket_idx_tail = glm::clamp<size_t>(
+            glm::floor((triangle_center_tail - node->bounds.b_min[node->split_axis]) * bucket_count / diag[node->split_axis]),
+            0, bucket_count - 1
+        );
+        bool tail_is_child0 = bucket_idx_tail < min_split_index;
+
+        if (head_is_child0 && tail_is_child0) {
+            head_ptr ++;
+        } else if ((!head_is_child0) && (!tail_is_child0)) {
+            tail_ptr --;
+        } else if ((!head_is_child0) && tail_is_child0) {
+            std::swap(ordered_triangles[head_ptr], ordered_triangles[tail_ptr]);
+            tail_ptr --;
+            head_ptr ++;
+        } else {
+            tail_ptr --;
+            head_ptr ++;
+        }
+    }
+    child0->start = node->start;
+    child0->end = head_ptr;
+    child1->start = child0->end;
+    child1->end = node->end;
+    node->end = node->start;
+
     child0->depth = node->depth + 1;
     child1->depth = node->depth + 1;
 
     child0->bounds = min_child0_bounds;
     child1->bounds = min_child1_bounds;
 
-    recursiveSplit(child0, state);
-    recursiveSplit(child1, state);
+    if ((child1->end - child0->start) > (128 * 1024)) {
+        thread_pool.parallelFor(2, 1, [&, child0, child1](size_t i, size_t) {
+            if (i == 0) {
+                recursiveSplit(child0, state);
+            } else {
+                recursiveSplit(child1, state);
+            }
+        });
+    } else {
+        recursiveSplit(child0, state);
+        recursiveSplit(child1, state);
+    }
 }
 
 size_t BVH::recursiveFlatten(BVHTreeNode *node) {
     BVHNode bvh_node {
         node->bounds,
         0,
-        static_cast<uint16_t>(node->triangles.size()),
+        static_cast<uint16_t>(node->end - node->start),
         static_cast<uint8_t>(node->split_axis),
     };
     auto idx = nodes.size();
@@ -142,10 +181,7 @@ size_t BVH::recursiveFlatten(BVHTreeNode *node) {
         recursiveFlatten(node->children[0]);
         nodes[idx].child1_index = recursiveFlatten(node->children[1]);
     } else {
-        nodes[idx].triangle_index = ordered_triangles.size();
-        for (const auto &triangle : node->triangles) {
-            ordered_triangles.push_back(triangle);
-        }
+        nodes[idx].triangle_index = node->start;
     }
     return idx;
 }
