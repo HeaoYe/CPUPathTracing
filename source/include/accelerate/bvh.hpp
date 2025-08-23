@@ -3,20 +3,14 @@
 #include "bounds.hpp"
 #include "shape/triangle.hpp"
 #include "sample/alias_table.hpp"
+#include "thread/spin_lock.hpp"
 
 struct BVHTreeNode {
     Bounds bounds {};
-    std::vector<Triangle> triangles;
+    size_t start, end;
     BVHTreeNode *children[2];
     size_t depth;
     size_t split_axis;
-
-    void updateBounds() {
-        bounds = {};
-        for (const auto &triangle : triangles) {
-            bounds.expand(triangle.getBounds());
-        }
-    }
 };
 
 struct alignas(32) BVHNode {
@@ -30,14 +24,16 @@ struct alignas(32) BVHNode {
 };
 
 struct BVHState {
-    size_t total_node_count {};
+    std::atomic<size_t> total_node_count {};
     size_t leaf_node_count {};
     size_t max_leaf_node_triangle_count {};
     size_t max_leaf_node_depth {};
+    SpinLock spin_lock {};
 
     void addLeafNode(BVHTreeNode *node) {
+        Guard guard(spin_lock);
         leaf_node_count ++;
-        max_leaf_node_triangle_count = glm::max(max_leaf_node_triangle_count, node->triangles.size());
+        max_leaf_node_triangle_count = glm::max(max_leaf_node_triangle_count, node->end - node->start);
         max_leaf_node_depth = glm::max(max_leaf_node_depth, node->depth);
     }
 };
@@ -47,6 +43,7 @@ public:
     BVHTreeNodeAllocator() : ptr(4096) {}
 
     BVHTreeNode *allocate() {
+        Guard guard(spin_lock);
         if (ptr == 4096) {
             nodes_list.push_back(new BVHTreeNode[4096]);
             ptr = 0;
@@ -61,6 +58,7 @@ public:
         nodes_list.clear();
     }
 private:
+    SpinLock spin_lock {};
     size_t ptr;
     std::vector<BVHTreeNode *> nodes_list;
 };

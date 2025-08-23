@@ -1,24 +1,33 @@
 #include "accelerate/scene_bvh.hpp"
 #include "util/debug_macro.hpp"
+#include "thread/thread_pool.hpp"
 #include <array>
 #include <iostream>
 
 void SceneBVH::build(std::vector<ShapeInstance> &&instances) {
-    root = allocator.allocate();
     auto temp_instances = std::move(instances);
     for (auto &instance : temp_instances) {
-        if (instance.shape.getBounds().isValid()) {
+        if (instance.shape->getBounds().isValid()) {
             instance.updateBounds();
-            root->instances.push_back(instance);
+            ordered_instances.push_back(instance);
         } else {
             infinity_instances.push_back(instance);
         }
     }
-    root->updateBounds();
+
+    root = allocator.allocate();
+    root->start = 0;
+    root->end = ordered_instances.size();
+    root->bounds = {};
+    for (const auto &instance : ordered_instances) {
+        root->bounds.expand(instance.bounds);
+    }
     root->depth = 1;
+
     SceneBVHState state {};
-    size_t instance_count = root->instances.size();
+    size_t instance_count = ordered_instances.size();
     recursiveSplit(root, state);
+    thread_pool.wait();
 
     std::cout << "Total Node Count: " << state.total_node_count << std::endl;
     std::cout << "Leaf Node Count: " << state.leaf_node_count << std::endl;
@@ -28,13 +37,12 @@ void SceneBVH::build(std::vector<ShapeInstance> &&instances) {
     std::cout << "Max Leaf Node Depth: " << state.max_leaf_node_depth << std::endl;
 
     nodes.reserve(state.total_node_count);
-    ordered_instances.reserve(instance_count);
     recursiveFlatten(root);
 }
 
 void SceneBVH::recursiveSplit(SceneBVHTreeNode *node, SceneBVHState &state) {
     state.total_node_count ++;
-    if (node->instances.size() == 1 || node->depth > 32) {
+    if (((node->end - node->start) == 1) || (node->depth > 32)) {
         state.addLeafNode(node);
         return;
     }
@@ -45,20 +53,17 @@ void SceneBVH::recursiveSplit(SceneBVHTreeNode *node, SceneBVHState &state) {
     Bounds min_child0_bounds {}, min_child1_bounds {};
     size_t min_child0_instance_count = 0, min_child1_instance_count = 0;
     constexpr size_t bucket_count = 12;
-    std::vector<size_t> instance_indices_buckets[3][bucket_count] = {};
     for (size_t axis = 0; axis < 3; axis ++) {
         Bounds bounds_buckets[bucket_count] = {};
         size_t instance_count_buckets[bucket_count] = {};
-        size_t instance_idx = 0;
-        for (const auto &instance : node->instances) {
+        for (size_t instance_idx = node->start; instance_idx < node->end; instance_idx ++) {
+            const auto &instance = ordered_instances[instance_idx];
             size_t bucket_idx = glm::clamp<size_t>(
                 glm::floor((instance.center[axis] - node->bounds.b_min[axis]) * bucket_count / diag[axis]),
                 0, bucket_count - 1
             );
             bounds_buckets[bucket_idx].expand(instance.bounds);
             instance_count_buckets[bucket_idx] ++;
-            instance_indices_buckets[axis][bucket_idx].push_back(instance_idx);
-            instance_idx ++;
         }
 
         Bounds left_bounds = bounds_buckets[0];
@@ -100,36 +105,68 @@ void SceneBVH::recursiveSplit(SceneBVHTreeNode *node, SceneBVHState &state) {
     node->children[0] = child0;
     node->children[1] = child1;
 
-    child0->instances.reserve(min_child0_instance_count);
-    child1->instances.reserve(min_child1_instance_count);
-    for (size_t i = 0; i < min_split_index; i ++) {
-        for (size_t idx : instance_indices_buckets[node->split_axis][i]) {
-            child0->instances.push_back(node->instances[idx]);
-        }
-    }
-    for (size_t i = min_split_index; i < bucket_count; i ++) {
-        for (size_t idx : instance_indices_buckets[node->split_axis][i]) {
-            child1->instances.push_back(node->instances[idx]);
-        }
-    }
+    size_t head_ptr = node->start;
+    size_t tail_ptr = node->end - 1;
 
-    node->instances.clear();
-    node->instances.shrink_to_fit();
+    while (head_ptr <= tail_ptr) {
+        const auto &instance_head = ordered_instances[head_ptr];
+        size_t bucket_idx_head = glm::clamp<size_t>(
+            glm::floor((instance_head.center[node->split_axis] - node->bounds.b_min[node->split_axis]) * bucket_count / diag[node->split_axis]),
+            0, bucket_count - 1
+        );
+        bool head_is_child0 = bucket_idx_head < min_split_index;
+
+        const auto &instance_tail = ordered_instances[tail_ptr];
+        size_t bucket_idx_tail = glm::clamp<size_t>(
+            glm::floor((instance_tail.center[node->split_axis] - node->bounds.b_min[node->split_axis]) * bucket_count / diag[node->split_axis]),
+            0, bucket_count - 1
+        );
+        bool tail_is_child0 = bucket_idx_tail < min_split_index;
+
+        if (head_is_child0 && tail_is_child0) {
+            head_ptr ++;
+        } else if ((!head_is_child0) && (!tail_is_child0)) {
+            tail_ptr --;
+        } else if ((!head_is_child0) && tail_is_child0) {
+            std::swap(ordered_instances[head_ptr], ordered_instances[tail_ptr]);
+            tail_ptr --;
+            head_ptr ++;
+        } else {
+            tail_ptr --;
+            head_ptr ++;
+        }
+    }
+    child0->start = node->start;
+    child0->end = head_ptr;
+    child1->start = child0->end;
+    child1->end = node->end;
+    node->end = node->start;
+
     child0->depth = node->depth + 1;
     child1->depth = node->depth + 1;
 
     child0->bounds = min_child0_bounds;
     child1->bounds = min_child1_bounds;
 
-    recursiveSplit(child0, state);
-    recursiveSplit(child1, state);
+    if ((child1->end - child0->start) > (128 * 1024)) {
+        thread_pool.parallelFor(2, 1, [&, child0, child1](size_t i, size_t) {
+            if (i == 0) {
+                recursiveSplit(child0, state);
+            } else {
+                recursiveSplit(child1, state);
+            }
+        });
+    } else {
+        recursiveSplit(child0, state);
+        recursiveSplit(child1, state);
+    }
 }
 
 size_t SceneBVH::recursiveFlatten(SceneBVHTreeNode *node) {
     SceneBVHNode bvh_node {
         node->bounds,
         0,
-        static_cast<uint16_t>(node->instances.size()),
+        static_cast<uint16_t>(node->end - node->start),
         static_cast<uint8_t>(node->split_axis),
     };
     auto idx = nodes.size();
@@ -138,10 +175,7 @@ size_t SceneBVH::recursiveFlatten(SceneBVHTreeNode *node) {
         recursiveFlatten(node->children[0]);
         nodes[idx].child1_index = recursiveFlatten(node->children[1]);
     } else {
-        nodes[idx].instance_index = ordered_instances.size();
-        for (const auto &instance : node->instances) {
-            ordered_instances.push_back(instance);
-        }
+        nodes[idx].instance_index = node->start;
     }
     return idx;
 }
@@ -184,7 +218,7 @@ std::optional<HitInfo> SceneBVH::intersect(const Ray &ray, float t_min, float t_
             auto instance_iter = ordered_instances.begin() + node.instance_index;
             for (size_t i = 0; i < node.instance_count; i ++) {
                 auto ray_object = ray.objectFromWorld(instance_iter->object_from_world);
-                auto hit_info = instance_iter->shape.intersect(ray_object, t_min, t_max);
+                auto hit_info = instance_iter->shape->intersect(ray_object, t_min, t_max);
                 DEBUG_LINE(ray.bounds_test_count += ray_object.bounds_test_count)
                 DEBUG_LINE(ray.triangle_test_count += ray_object.triangle_test_count)
                 if (hit_info) {
@@ -201,7 +235,7 @@ std::optional<HitInfo> SceneBVH::intersect(const Ray &ray, float t_min, float t_
 
     for (const auto &infinity_instance : infinity_instances) {
         auto ray_object = ray.objectFromWorld(infinity_instance.object_from_world);
-        auto hit_info = infinity_instance.shape.intersect(ray_object, t_min, t_max);
+        auto hit_info = infinity_instance.shape->intersect(ray_object, t_min, t_max);
         DEBUG_LINE(ray.bounds_test_count += ray_object.bounds_test_count)
         DEBUG_LINE(ray.triangle_test_count += ray_object.triangle_test_count)
         if (hit_info) {

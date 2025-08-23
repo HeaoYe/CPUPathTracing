@@ -2,9 +2,10 @@
 
 #include "bounds.hpp"
 #include "shape/shape.hpp"
+#include "thread/spin_lock.hpp"
 
 struct ShapeInstance {
-    const Shape &shape;
+    const Shape *shape;
     const Material *materail;
     glm::mat4 world_from_object;
     glm::mat4 object_from_world;
@@ -14,7 +15,7 @@ struct ShapeInstance {
 
     void updateBounds() {
         bounds = {};
-        auto bounds_object = shape.getBounds();
+        auto bounds_object = shape->getBounds();
         for (size_t idx = 0; idx < 8; idx ++) {
             auto corner_object = bounds_object.getCorner(idx);
             glm::vec3 corner_world = world_from_object * glm::vec4(corner_object, 1.f);
@@ -26,17 +27,10 @@ struct ShapeInstance {
 
 struct SceneBVHTreeNode {
     Bounds bounds {};
-    std::vector<ShapeInstance> instances;
+    size_t start, end;
     SceneBVHTreeNode *children[2];
     size_t depth;
     size_t split_axis;
-
-    void updateBounds() {
-        bounds = {};
-        for (const auto &instance : instances) {
-            bounds.expand(instance.bounds);
-        }
-    }
 };
 
 struct alignas(32) SceneBVHNode {
@@ -50,14 +44,16 @@ struct alignas(32) SceneBVHNode {
 };
 
 struct SceneBVHState {
-    size_t total_node_count {};
+    std::atomic<size_t> total_node_count {};
     size_t leaf_node_count {};
     size_t max_leaf_node_instance_count {};
     size_t max_leaf_node_depth {};
+    SpinLock spin_lock {};
 
     void addLeafNode(SceneBVHTreeNode *node) {
+        Guard guard(spin_lock);
         leaf_node_count ++;
-        max_leaf_node_instance_count = glm::max(max_leaf_node_instance_count, node->instances.size());
+        max_leaf_node_instance_count = glm::max(max_leaf_node_instance_count, node->end - node->start);
         max_leaf_node_depth = glm::max(max_leaf_node_depth, node->depth);
     }
 };
@@ -67,6 +63,7 @@ public:
     SceneBVHTreeNodeAllocator() : ptr(4096) {}
 
     SceneBVHTreeNode *allocate() {
+        Guard guard(spin_lock);
         if (ptr == 4096) {
             nodes_list.push_back(new SceneBVHTreeNode[4096]);
             ptr = 0;
@@ -81,6 +78,7 @@ public:
         nodes_list.clear();
     }
 private:
+    SpinLock spin_lock {};
     size_t ptr;
     std::vector<SceneBVHTreeNode *> nodes_list;
 };
