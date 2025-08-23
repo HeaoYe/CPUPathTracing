@@ -3,7 +3,6 @@
 #include "shape.hpp"
 #include "accelerate/scene_bvh.hpp"
 #include "light/area_light.hpp"
-#include "light/infinite_light.hpp"
 #include "light/light_sampler.hpp"
 
 struct Scene : public Shape {
@@ -20,10 +19,14 @@ public:
         material->area_light = area_light;
         addShape(area_light->getShape(), material);
         light_sampler.addLight(area_light);
+        light_sampler_compensated.addLight(area_light);
     }
 
-    void addInfiniteLight(const InfiniteLight *infinite_light) {
+    void addInfiniteLight(const Light *infinite_light) {
         light_sampler.addLight(infinite_light);
+        if (!infinite_light->impossible()) {
+            light_sampler_compensated.addLight(infinite_light);
+        }
         infinite_lights.push_back(infinite_light);
     }
 
@@ -38,15 +41,17 @@ public:
         auto scene_bounds = scene_bvh.getBounds();
         radius = 0.5 * glm::distance(scene_bounds.b_max, scene_bounds.b_min);
         light_sampler.build(radius);
+        light_sampler_compensated.build(radius);
     }
 
-    const LightSampler &getLightSampler() const { return light_sampler; }
+    const LightSampler &getLightSampler(bool allow_mis_compensation) const { return allow_mis_compensation ? light_sampler_compensated : light_sampler; }
     float getRadius() const { return radius; }
-    const std::vector<const InfiniteLight *> &getInfiniteLights() const { return infinite_lights; }
+    const std::vector<const Light *> &getInfiniteLights() const { return infinite_lights; }
 private:
     std::vector<ShapeInstance> instances;
     SceneBVH scene_bvh {};
     LightSampler light_sampler;
+    LightSampler light_sampler_compensated;
     float radius;
-    std::vector<const InfiniteLight *> infinite_lights;
+    std::vector<const Light *> infinite_lights;
 };
