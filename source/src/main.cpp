@@ -4,12 +4,14 @@
 #include "shape/plane.hpp"
 #include "shape/scene.hpp"
 #include "util/rgb.hpp"
+#include "image/image.hpp"
 #include "material/diffuse_material.hpp"
 #include "material/specular_material.hpp"
 #include "material/dielectric_material.hpp"
 #include "material/conductor_material.hpp"
 #include "material/ground_material.hpp"
 #include "light/uniform_infinite_light.hpp"
+#include "light/image_infinite_light.hpp"
 #include "renderer/path_tracing_renderer.hpp"
 #include "renderer/simple_path_tracing_renderer.hpp"
 #include "renderer/previewer.hpp"
@@ -68,14 +70,17 @@ int main() {
     };
     scene.addShape(ground, new GroundMaterial { { 1, 1, 1 } });
 
-    scene.addInfiniteLight(new UniformInfiniteLight { { 0.5, 0.5, 0.5 } });
+    // Image env_image { "hdris/HdrOutdoorSnowMountainsEveningClear001_HDR_4K.exr" };
+    // Image env_image { "hdris/qwantani_night_puresky_4k.exr" };
+    Image env_image { "hdris/kloppenheim_07_puresky_4k.exr" };
+    scene.addInfiniteLight(new ImageInfiniteLight { &env_image });
 
     scene.build();
 
     PathTracingRenderer path_tracing_renderer { camera, scene };
     Previewer previewer(path_tracing_renderer);
     if (previewer.preview()) {
-        path_tracing_renderer.render(32, "PT_MIS_TEST.ppm");
+        path_tracing_renderer.render(32, "PT_MIS_TEST.exr");
     }
 
     return 0;

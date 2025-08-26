@@ -70,15 +70,11 @@ void ThreadPool::parallelFor(size_t width, size_t height, const std::function<vo
     size_t chunk_height = std::ceil(chunk_height_float);
 
     for (size_t x = 0; x < width; x += chunk_width) {
+        size_t W = ((x + chunk_width) > width) ? (width - x) : chunk_width;
         for (size_t y = 0; y < height; y += chunk_height) {
             pending_task_count ++;
-            if (x + chunk_width > width) {
-                chunk_width = width - x;
-            }
-            if (y + chunk_height > height) {
-                chunk_height = height - y;
-            }
-            tasks.push(new ParallelForTask(x, y, chunk_width, chunk_height, lambda));
+            size_t H = ((y + chunk_height) > height) ? (height - y) : chunk_height;
+            tasks.push(new ParallelForTask(x, y, W, H, lambda));
         }
     }
 }
