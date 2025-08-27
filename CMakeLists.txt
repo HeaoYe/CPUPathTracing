@@ -6,9 +6,13 @@ project(
 )
 
 set(CMAKE_BUILD_TYPE Release)
+set(BUILD_SHARED_LIBS OFF)
 
 add_subdirectory(thirdparty/glm)
 add_subdirectory(thirdparty/rapidobj)
 add_subdirectory(thirdparty/SFML)
+add_subdirectory(thirdparty/openexr)
+target_compile_options(OpenEXRCore PRIVATE -msse4.1)
+target_compile_options(OpenEXR PRIVATE -msse4.1)
 
 add_subdirectory(source)
