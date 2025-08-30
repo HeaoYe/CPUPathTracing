@@ -5,8 +5,8 @@ ImageInfiniteLight::ImageInfiniteLight(const Image *image, float start_phi) : im
     precompute_phi = 0;
     gird_count = girdIdxFromImagePoint(image->getResolution()) + 1;
     std::vector<float> girds_phi(gird_count.x * gird_count.y);
-    for (size_t x = 0; x < image->getWidth(); x ++) {
-        for (size_t y = 0; y < image->getWidth(); y ++) {
+    for (size_t y = 0; y < image->getHeight(); y ++) {
+        for (size_t x = 0; x < image->getWidth(); x ++) {
             glm::vec3 radiance = image->getPixel(x, y);
             float pixel_phi = glm::max(radiance.r, glm::max(radiance.g, radiance.b)) * (glm::cos(y * PI / image->getHeight()) - glm::cos((y + 1) * PI / image->getHeight()));
             precompute_phi += pixel_phi;
@@ -17,18 +17,22 @@ ImageInfiniteLight::ImageInfiniteLight(const Image *image, float start_phi) : im
     float average_phi = precompute_phi / (gird_count.x * gird_count.y);
     precompute_phi *= 2 * PI * PI / image->getWidth();
     alias_table.build(girds_phi);
+    impossible_compensated = true;
     for (float &gird_phi : girds_phi) {
         if (gird_phi > average_phi) {
+            impossible_compensated = false;
             gird_phi -= average_phi;
         } else {
             gird_phi = 0;
         }
     }
-    alias_table_compensated.build(girds_phi);
+    if (!impossible_compensated) {
+        alias_table_compensated.build(girds_phi);
+    }
 }
 
 std::optional<LightSample> ImageInfiniteLight::sampleLight(const glm::vec3 &surface_point, float scene_radius, const RNG &rng, bool allow_mis_compensation) const {
-    auto result = (allow_mis_compensation ? alias_table_compensated : alias_table).sample(rng.uniform());
+    auto result = ((allow_mis_compensation && (!impossible_compensated)) ? alias_table_compensated : alias_table).sample(rng.uniform());
     size_t gird_x = result.index % gird_count.x;
     size_t gird_y = result.index / gird_count.x;
     float w = glm::min<float>(gird_side_length, image->getWidth() - gird_x * gird_side_length);
@@ -70,7 +74,7 @@ float ImageInfiniteLight::getPDF(const glm::vec3 &surface_point, const glm::vec3
     float w = glm::min<float>(gird_side_length, image->getWidth() - gird_idx.x * gird_side_length);
     float h = glm::min<float>(gird_side_length, image->getHeight() - gird_idx.y * gird_side_length);
 
-    float gird_prob = (allow_mis_compensation ? alias_table_compensated : alias_table).getProbs()[gird_idx.y * gird_count.x + gird_idx.x];
+    float gird_prob = ((allow_mis_compensation && (!impossible_compensated)) ? alias_table_compensated : alias_table).getProbs()[gird_idx.y * gird_count.x + gird_idx.x];
 
     return gird_prob * image->getWidth() * image->getHeight() / (2 * PI * PI * glm::sqrt(1 - light_direction.y * light_direction.y) * w * h);
 }
@@ -104,11 +108,7 @@ glm::vec2 ImageInfiniteLight::imagePointFromDirection(const glm::vec3 &direction
 
 glm::vec3 ImageInfiniteLight::directionFromImagePoint(const glm::vec2 &image_point) const {
     float theta = glm::radians(180 * image_point.y / image->getHeight());
-    float phi = glm::radians(360 * image_point.x / image->getWidth());
-    phi += start_phi;
-    if (phi > 360) {
-        phi -= 360;
-    }
+    float phi = glm::radians(360 * image_point.x / image->getWidth() - start_phi);
 
     float sin_theta = glm::sin(theta);
     float cos_theta = glm::cos(theta);

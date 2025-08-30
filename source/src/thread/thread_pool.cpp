@@ -46,8 +46,8 @@ public:
         : x(x), y(y), chunk_width(chunk_width), chunk_height(chunk_height), lambda(lambda) {}
 
     void run() override {
-        for (size_t idx_x = 0; idx_x < chunk_width; idx_x ++) {
-            for (size_t idx_y = 0; idx_y < chunk_height; idx_y ++) {
+        for (size_t idx_y = 0; idx_y < chunk_height; idx_y ++) {
+            for (size_t idx_x = 0; idx_x < chunk_width; idx_x ++) {
                 lambda(x + idx_x, y + idx_y);
             }
         }
