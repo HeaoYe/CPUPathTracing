@@ -1,23 +1,35 @@
 #pragma once
 
+#include "light_sample.hpp"
 #include "util/rng.hpp"
+#include "util/generalized_ptr.hpp"
+
+#include "area_light.hpp"
+#include "uniform_infinite_light.hpp"
+#include "image_infinite_light.hpp"
+
 #include <glm/glm.hpp>
 #include <optional>
 
-struct LightSample {
-    glm::vec3 light_point;
-    glm::vec3 light_direction;
-    glm::vec3 Le;
-    float pdf;
-};
-
-class Light {
+class Light : public GeneralizedPtr<AreaLight, UniformInfiniteLight, ImageInfiniteLight> {
 public:
-    virtual bool impossible() const = 0;
+    bool impossible() const {
+        return DISPATCH_CONST(impossible);
+    }
 
-    virtual float Phi(float scene_radius) const = 0;
-    virtual std::optional<LightSample> sampleLight(const glm::vec3 &surface_point, float scene_radius, const RNG &rng, bool allow_mis_compensation) const = 0;
+    float Phi(float scene_radius) const {
+        return DISPATCH_CONST(Phi, scene_radius);
+    }
 
-    virtual glm::vec3 getRadiance(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal) const = 0;
-    virtual float getPDF(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal, bool allow_mis_compensation) const = 0;
+    std::optional<LightSample> sampleLight(const glm::vec3 &surface_point, float scene_radius, const RNG &rng, bool allow_mis_compensation) const {
+        return DISPATCH_CONST(sampleLight, surface_point, scene_radius, rng, allow_mis_compensation);
+    }
+
+    glm::vec3 getRadiance(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal) const {
+        return DISPATCH_CONST(getRadiance, surface_point, light_point, normal);
+    }
+
+    float getPDF(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal, bool allow_mis_compensation) const {
+        return DISPATCH_CONST(getPDF, surface_point, light_point, normal, allow_mis_compensation);
+    }
 };

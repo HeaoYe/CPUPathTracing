@@ -3,13 +3,13 @@
 void LightSampler::build(float scene_radius) {
     std::vector<float> phis;
     phis.reserve(lights.size());
-    for (const auto *light : lights) {
-        phis.push_back(light->Phi(scene_radius));
+    for (auto light : lights) {
+        phis.push_back(light.Phi(scene_radius));
     }
     alias_table.build(phis);
     const auto &probs = alias_table.getProbs();
     for (size_t i = 0; i < lights.size(); i ++) {
-        light2prob.insert(std::make_pair(lights[i], probs[i]));
+        light2prob.insert(std::make_pair(lights[i].ptr(), probs[i]));
     }
 }
 

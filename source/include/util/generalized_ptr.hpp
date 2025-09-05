@@ -44,20 +44,6 @@ public:
     using type = std::remove_pointer_t<decltype(GetTypePointer())>;
 };
 
-// template<typename T, typename ...Ts>
-// struct GetTypeOf<0, T, Ts...> {
-//     using type = T;
-// };
-
-// template<size_t Idx, typename T1, typename T2, typename ...Ts>
-// struct GetTypeOf<Idx, T1, T2, Ts...> {
-//     using type = typename GetTypeOf<Idx - 1, T2, Ts...>::type;
-// };
-// template<typename T1, typename T2, typename ...Ts>
-// struct GetTypeOf<0, T1, T2, Ts...> {
-//     using type = T1;
-// };
-
 class CombinedPointer {
 public:
     CombinedPointer(uintptr_t ptr, uint8_t tag, bool is_const) : ptr(ptr), tag(tag), is_const(is_const) {}
@@ -101,7 +87,7 @@ template <typename ...Ts>
 class GeneralizedPtr {
 private:
     static constexpr size_t MAX_TS = sizeof...(Ts);
-    CombinedPointer pointer;
+    TaggegPointer pointer;
 public:
     template <typename T>
     GeneralizedPtr(T *ptr) : pointer(
@@ -117,6 +103,8 @@ public:
         ) {}
 
     bool isValid() const { return pointer.getPtr() != 0; }
+
+    uintptr_t ptr() const { return pointer.getPtr(); }
 private:
     template <size_t Idx>
     typename GetTypeOf<Idx, Ts...>::type *cast() {

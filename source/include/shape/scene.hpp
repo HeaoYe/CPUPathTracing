@@ -18,13 +18,13 @@ public:
     void addAreaLight(const AreaLight *area_light, MaterialType *material) {
         material->area_light = area_light;
         addShape(area_light->getShape(), material);
-        light_sampler.addLight(area_light);
-        light_sampler_compensated.addLight(area_light);
+        light_sampler.addLight({ area_light });
+        light_sampler_compensated.addLight({ area_light });
     }
 
-    void addInfiniteLight(const Light *infinite_light) {
+    void addInfiniteLight(Light infinite_light) {
         light_sampler.addLight(infinite_light);
-        if (!infinite_light->impossible()) {
+        if (!infinite_light.impossible()) {
             light_sampler_compensated.addLight(infinite_light);
         }
         infinite_lights.push_back(infinite_light);
@@ -46,12 +46,12 @@ public:
 
     const LightSampler &getLightSampler(bool allow_mis_compensation) const { return allow_mis_compensation ? light_sampler_compensated : light_sampler; }
     float getRadius() const { return radius; }
-    const std::vector<const Light *> &getInfiniteLights() const { return infinite_lights; }
+    const std::vector<Light> &getInfiniteLights() const { return infinite_lights; }
 private:
     std::vector<ShapeInstance> instances;
     SceneBVH scene_bvh {};
     LightSampler light_sampler;
     LightSampler light_sampler_compensated;
     float radius;
-    std::vector<const Light *> infinite_lights;
+    std::vector<Light> infinite_lights;
 };

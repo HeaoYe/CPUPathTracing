@@ -73,7 +73,7 @@ int main() {
     // Image env_image { "hdris/HdrOutdoorSnowMountainsEveningClear001_HDR_4K.exr" };
     // Image env_image { "hdris/qwantani_night_puresky_4k.exr" };
     Image env_image { "hdris/kloppenheim_07_puresky_4k.exr" };
-    scene.addInfiniteLight(new ImageInfiniteLight { &env_image });
+    scene.addInfiniteLight({ new ImageInfiniteLight { &env_image } });
 
     scene.build();
 
@@ -89,6 +89,8 @@ int main() {
     // tagged_ptr material: 14332 ms
     // combined_ptr shape: 13554 ms
     // tagged_ptr shape: 13198 ms
+    // combined_ptr light: 13214 ms
+    // tagged_ptr light: 13028 ms
 
     return 0;
 }

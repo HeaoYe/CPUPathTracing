@@ -37,7 +37,7 @@ glm::vec3 SimplePathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) 
                 if (!last_is_specular) {
                     auto light_source_sample = scene.getLightSampler(false).sample(rng.uniform());
                     if (light_source_sample.has_value()) {
-                        auto light_sample = light_source_sample->light->sampleLight(hit_info->hit_point, scene.getRadius(), rng, false);
+                        auto light_sample = light_source_sample->light.sampleLight(hit_info->hit_point, scene.getRadius(), rng, false);
                         if (light_sample.has_value() && (!scene.intersect({ hit_info->hit_point, light_sample->light_point - hit_info->hit_point }, 1e-5, 1.f - 1e-5))) {
                             glm::vec3 light_direction_local = frame.localFromWorld(light_sample->light_direction);
                             L += beta * hit_info->material.BSDF(hit_info->hit_point, light_direction_local, view_direction)
@@ -60,9 +60,9 @@ glm::vec3 SimplePathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) 
             ray.direction = frame.worldFromLocal(light_direction);
         } else {
             if (last_is_specular) {
-                for (const auto *infinite_light : scene.getInfiniteLights()) {
+                for (auto infinite_light : scene.getInfiniteLights()) {
                     glm::vec3 light_direction = glm::normalize(ray.direction);
-                    L += beta * infinite_light->getRadiance(ray.origin, ray.origin + scene.getRadius() * 2 * light_direction, -light_direction);
+                    L += beta * infinite_light.getRadiance(ray.origin, ray.origin + scene.getRadius() * 2 * light_direction, -light_direction);
                 }
             }
             break;
