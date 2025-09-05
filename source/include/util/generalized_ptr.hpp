@@ -83,6 +83,122 @@ private:
     static constexpr uintptr_t tag_ptr_mask = ~const_mask;
 };
 
+namespace internal {
+    template<typename F, typename T0>
+    auto Dispatch(F &&func, void *ptr, uint8_t tag) {
+        return func(static_cast<T0 *>(ptr));
+    }
+
+    template<typename F, typename T0, typename T1>
+    auto Dispatch(F &&func, void *ptr, uint8_t tag) {
+        switch (tag) {
+        case 0:
+            return func(static_cast<T0 *>(ptr));
+        default:
+            return func(static_cast<T1 *>(ptr));
+        }
+    }
+
+    template<typename F, typename T0, typename T1, typename T2>
+    auto Dispatch(F &&func, void *ptr, uint8_t tag) {
+        switch (tag) {
+        case 0:
+            return func(static_cast<T0 *>(ptr));
+        case 1:
+            return func(static_cast<T1 *>(ptr));
+        default:
+            return func(static_cast<T2 *>(ptr));
+        }
+    }
+
+    template<typename F, typename T0, typename T1, typename T2, typename T3>
+    auto Dispatch(F &&func, void *ptr, uint8_t tag) {
+        switch (tag) {
+        case 0:
+            return func(static_cast<T0 *>(ptr));
+        case 1:
+            return func(static_cast<T1 *>(ptr));
+        case 2:
+            return func(static_cast<T2 *>(ptr));
+        default:
+            return func(static_cast<T3 *>(ptr));
+        }
+    }
+
+    template<typename F, typename T0, typename T1, typename T2, typename T3, typename T4>
+    auto Dispatch(F &&func, void *ptr, uint8_t tag) {
+        switch (tag) {
+        case 0:
+            return func(static_cast<T0 *>(ptr));
+        case 1:
+            return func(static_cast<T1 *>(ptr));
+        case 2:
+            return func(static_cast<T2 *>(ptr));
+        case 3:
+            return func(static_cast<T3 *>(ptr));
+        default:
+            return func(static_cast<T4 *>(ptr));
+        }
+    }
+
+    template<typename F, typename T0>
+    auto DispatchConst(F &&func, const void *ptr, uint8_t tag) {
+        return func(static_cast<const T0 *>(ptr));
+    }
+
+    template<typename F, typename T0, typename T1>
+    auto DispatchConst(F &&func, const void *ptr, uint8_t tag) {
+        switch (tag) {
+        case 0:
+            return func(static_cast<const T0 *>(ptr));
+        default:
+            return func(static_cast<const T1 *>(ptr));
+        }
+    }
+
+    template<typename F, typename T0, typename T1, typename T2>
+    auto DispatchConst(F &&func, const void *ptr, uint8_t tag) {
+        switch (tag) {
+        case 0:
+            return func(static_cast<const T0 *>(ptr));
+        case 1:
+            return func(static_cast<const T1 *>(ptr));
+        default:
+            return func(static_cast<const T2 *>(ptr));
+        }
+    }
+
+    template<typename F, typename T0, typename T1, typename T2, typename T3>
+    auto DispatchConst(F &&func, const void *ptr, uint8_t tag) {
+        switch (tag) {
+        case 0:
+            return func(static_cast<const T0 *>(ptr));
+        case 1:
+            return func(static_cast<const T1 *>(ptr));
+        case 2:
+            return func(static_cast<const T2 *>(ptr));
+        default:
+            return func(static_cast<const T3 *>(ptr));
+        }
+    }
+
+    template<typename F, typename T0, typename T1, typename T2, typename T3, typename T4>
+    auto DispatchConst(F &&func, const void *ptr, uint8_t tag) {
+        switch (tag) {
+        case 0:
+            return func(static_cast<const T0 *>(ptr));
+        case 1:
+            return func(static_cast<const T1 *>(ptr));
+        case 2:
+            return func(static_cast<const T2 *>(ptr));
+        case 3:
+            return func(static_cast<const T3 *>(ptr));
+        default:
+            return func(static_cast<const T4 *>(ptr));
+        }
+    }
+}
+
 template <typename ...Ts>
 class GeneralizedPtr {
 private:
@@ -117,52 +233,16 @@ private:
         return reinterpret_cast<const typename GetTypeOf<Idx, Ts...>::type *>(pointer.getPtr());
     }
 protected:
-
-    #define B(max_ts) else if constexpr (MAX_TS == max_ts) { switch(pointer.getTag()) {
-    #define E() } }
-    #define BODY() \
-        B(1) C(0) E() \
-        B(2) C(0) C(1)  E() \
-        B(3) C(0) C(1) C(2) E() \
-        B(4) C(0) C(1) C(2) C(3)  E() \
-        B(5) C(0) C(1) C(2) C(3) C(4) E() \
-        B(6) C(0) C(1) C(2) C(3) C(4) C(5) E() \
-        B(7) C(0) C(1) C(2) C(3) C(4) C(5) C(6) E() \
-        B(8) C(0) C(1) C(2) C(3) C(4) C(5) C(6) C(7) E() \
-        B(9) C(0) C(1) C(2) C(3) C(4) C(5) C(6) C(7) C(8) E() \
-        B(10) C(0) C(1) C(2) C(3) C(4) C(5) C(6) C(7) C(8) C(9) E() \
-
     template <typename Func>
     auto Dispatch(Func &&func) {
-        if constexpr (MAX_TS == 0) {
-        }
-        #define C(idx) case idx: if (!pointer.isConst()) return func(cast<idx>()); else { assert(false); return func(cast<idx>()); }
-        BODY()
-        #undef C
-        else {
-            static_assert(false, "Unreachable: Please Add Code");
-        }
-        // Unreachable, Just For Skiping Warning
-        return func(reinterpret_cast<decltype(cast<0>())>(0));
+        DEBUG_LINE(assert(!pointer.isConst()))
+        return internal::Dispatch<Func, Ts...>(std::move(func), reinterpret_cast<void *>(pointer.getPtr()), pointer.getTag());
     }
 
     template <typename Func>
     auto DispatchConst(Func &&func) const {
-        if constexpr (MAX_TS == 0) {
-        }
-        #define C(idx) case idx: return func(constCast<idx>());
-        BODY()
-        #undef C
-        else {
-            static_assert(false, "Unreachable: Please Add Code");
-        }
-        // Unreachable, Just For Skiping Warning
-        return func(reinterpret_cast<decltype(constCast<0>())>(0));
+        return internal::DispatchConst<Func, Ts...>(std::move(func), reinterpret_cast<const void *>(pointer.getPtr()), pointer.getTag());
     }
-
-    #undef BODY
-    #undef E
-    #undef B
 };
 
 #define DISPATCH(func_name, ...) Dispatch([&](auto *ptr) { return ptr->func_name(__VA_ARGS__); })

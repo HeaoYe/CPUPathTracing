@@ -7,7 +7,7 @@
 #include "path_tracing_renderer.hpp"
 #include "simple_path_tracing_renderer.hpp"
 
-class Renderer : public GeneralizedPtr<BoundsTestCountRenderer, TriangleTestCountRenderer, NormalRenderer, PathTracingRenderer, SimplePathTracingRenderer>{
+class Renderer : public GeneralizedPtr<BoundsTestCountRenderer, TriangleTestCountRenderer, NormalRenderer, PathTracingRenderer, SimplePathTracingRenderer> {
 public:
     void render(size_t spp, const std::filesystem::path &filename) {
         return DISPATCH(render, spp, filename);
