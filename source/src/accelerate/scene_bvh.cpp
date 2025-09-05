@@ -7,7 +7,7 @@
 void SceneBVH::build(std::vector<ShapeInstance> &&instances) {
     auto temp_instances = std::move(instances);
     for (auto &instance : temp_instances) {
-        if (instance.shape->getBounds().isValid()) {
+        if (instance.shape.getBounds().isValid()) {
             instance.updateBounds();
             ordered_instances.push_back(instance);
         } else {
@@ -218,7 +218,7 @@ std::optional<HitInfo> SceneBVH::intersect(const Ray &ray, float t_min, float t_
             auto instance_iter = ordered_instances.begin() + node.instance_index;
             for (size_t i = 0; i < node.instance_count; i ++) {
                 auto ray_object = ray.objectFromWorld(instance_iter->object_from_world);
-                auto hit_info = instance_iter->shape->intersect(ray_object, t_min, t_max);
+                auto hit_info = instance_iter->shape.intersect(ray_object, t_min, t_max);
                 DEBUG_LINE(ray.bounds_test_count += ray_object.bounds_test_count)
                 DEBUG_LINE(ray.triangle_test_count += ray_object.triangle_test_count)
                 if (hit_info) {
@@ -235,7 +235,7 @@ std::optional<HitInfo> SceneBVH::intersect(const Ray &ray, float t_min, float t_
 
     for (const auto &infinity_instance : infinity_instances) {
         auto ray_object = ray.objectFromWorld(infinity_instance.object_from_world);
-        auto hit_info = infinity_instance.shape->intersect(ray_object, t_min, t_max);
+        auto hit_info = infinity_instance.shape.intersect(ray_object, t_min, t_max);
         DEBUG_LINE(ray.bounds_test_count += ray_object.bounds_test_count)
         DEBUG_LINE(ray.triangle_test_count += ray_object.triangle_test_count)
         if (hit_info) {

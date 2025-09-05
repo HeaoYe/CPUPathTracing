@@ -1,11 +1,10 @@
 #pragma once
 
-#include "shape.hpp"
 #include "accelerate/scene_bvh.hpp"
 #include "light/area_light.hpp"
 #include "light/light_sampler.hpp"
 
-struct Scene : public Shape {
+struct Scene {
 public:
     void addShape(
         const Shape &shape,
@@ -35,7 +34,7 @@ public:
         const Ray &ray,
         float t_min = 1e-5,
         float t_max = std::numeric_limits<float>::infinity()
-    ) const override;
+    ) const;
 
     void build() {
         scene_bvh.build(std::move(instances));

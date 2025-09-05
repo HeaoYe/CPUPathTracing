@@ -63,13 +63,14 @@ private:
     std::vector<BVHTreeNode *> nodes_list;
 };
 
-class BVH : public Shape {
+class BVH {
 public:
     void build(std::vector<Triangle> &&triangles);
-    std::optional<HitInfo> intersect(const Ray &ray, float t_min, float t_max) const override;
-    Bounds getBounds() const override { return nodes[0].bounds; }
-    float getArea() const override { return area; }
-    std::optional<ShapeSample> sampleShape(const RNG &rng) const override;
+    std::optional<HitInfo> intersect(const Ray &ray, float t_min, float t_max) const;
+    Bounds getBounds() const { return nodes[0].bounds; }
+    float getArea() const { return area; }
+    std::optional<ShapeSample> sampleShape(const RNG &rng) const;
+    float PDF(const glm::vec3 &point, const glm::vec3 &normal) const { return 1.f / getArea(); }
 private:
     void recursiveSplit(BVHTreeNode *node, BVHState &state);
     size_t recursiveFlatten(BVHTreeNode *node);

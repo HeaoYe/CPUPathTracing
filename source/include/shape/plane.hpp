@@ -1,8 +1,11 @@
 #pragma once
 
-#include "shape.hpp"
+#include "shape_sample.hpp"
+#include "camera/ray.hpp"
+#include "accelerate/bounds.hpp"
+#include <optional>
 
-struct Plane : public Shape {
+struct Plane {
     Plane(const glm::vec3 &point, const glm::vec3 &normal, float radius) : point(point), normal(glm::normalize(normal)), bounds(), radius(radius) {
         glm::vec3 up = glm::abs(this->normal.y) < 0.99999 ? glm::vec3(0, 1, 0) : glm::vec3(0, 0, 1);
         x_axis = glm::normalize(glm::cross(this->normal, up));
@@ -15,12 +18,13 @@ struct Plane : public Shape {
         }
     }
 
-    std::optional<HitInfo> intersect(const Ray &ray, float t_min, float t_max) const override;
+    std::optional<HitInfo> intersect(const Ray &ray, float t_min, float t_max) const;
 
-    Bounds getBounds() const override { return bounds; }
+    Bounds getBounds() const { return bounds; }
 
-    float getArea() const override;
-    std::optional<ShapeSample> sampleShape(const RNG &rng) const override;
+    float getArea() const;
+    std::optional<ShapeSample> sampleShape(const RNG &rng) const;
+    float PDF(const glm::vec3 &point, const glm::vec3 &normal) const { return 1.f / getArea(); }
 
     glm::vec3 point;
     glm::vec3 normal, x_axis, z_axis;

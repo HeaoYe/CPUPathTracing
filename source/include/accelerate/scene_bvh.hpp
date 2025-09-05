@@ -2,10 +2,13 @@
 
 #include "bounds.hpp"
 #include "shape/shape.hpp"
+#include "camera/ray.hpp"
+#include "accelerate/bounds.hpp"
+#include <optional>
 #include "thread/spin_lock.hpp"
 
 struct ShapeInstance {
-    const Shape *shape;
+    Shape shape;
     Material materail;
     glm::mat4 world_from_object;
     glm::mat4 object_from_world;
@@ -15,7 +18,7 @@ struct ShapeInstance {
 
     void updateBounds() {
         bounds = {};
-        auto bounds_object = shape->getBounds();
+        auto bounds_object = shape.getBounds();
         for (size_t idx = 0; idx < 8; idx ++) {
             auto corner_object = bounds_object.getCorner(idx);
             glm::vec3 corner_world = world_from_object * glm::vec4(corner_object, 1.f);
@@ -83,11 +86,11 @@ private:
     std::vector<SceneBVHTreeNode *> nodes_list;
 };
 
-class SceneBVH : public Shape {
+class SceneBVH {
 public:
     void build(std::vector<ShapeInstance> &&instances);
-    std::optional<HitInfo> intersect(const Ray &ray, float t_min, float t_max) const override;
-    Bounds getBounds() const override { return nodes[0].bounds; }
+    std::optional<HitInfo> intersect(const Ray &ray, float t_min, float t_max) const;
+    Bounds getBounds() const { return nodes[0].bounds; }
 private:
     void recursiveSplit(SceneBVHTreeNode *node, SceneBVHState &state);
     size_t recursiveFlatten(SceneBVHTreeNode *node);

@@ -2,18 +2,35 @@
 
 #include "camera/ray.hpp"
 #include "accelerate/bounds.hpp"
+#include "util/generalized_ptr.hpp"
+
+#include "shape_sample.hpp"
+#include "sphere.hpp"
+#include "plane.hpp"
+#include "triangle.hpp"
+#include "model.hpp"
+#include "accelerate/bvh.hpp"
+
 #include <optional>
 
-struct ShapeSample {
-    glm::vec3 point;
-    glm::vec3 normal;
-    float pdf;
-};
+struct Shape : public GeneralizedPtr<Sphere, Plane, Triangle, Model, BVH> {
+    std::optional<HitInfo> intersect(const Ray &ray, float t_min, float t_max) const {
+        return DISPATCH_CONST(intersect, ray, t_min, t_max);
+    }
 
-struct Shape {
-    virtual std::optional<HitInfo> intersect(const Ray &ray, float t_min, float t_max) const = 0;
-    virtual Bounds getBounds() const { return {}; }
-    virtual float getArea() const { return -1; }
-    virtual std::optional<ShapeSample> sampleShape(const RNG &rng) const { return {}; }
-    virtual float PDF(const glm::vec3 &point, const glm::vec3 &normal) const { return 1.f / getArea(); }
+    Bounds getBounds() const {
+        return DISPATCH_CONST(getBounds);
+    }
+
+    float getArea() const {
+        return DISPATCH_CONST(getArea);
+    }
+
+    std::optional<ShapeSample> sampleShape(const RNG &rng) const {
+        return DISPATCH_CONST(sampleShape, rng);
+    }
+
+    float PDF(const glm::vec3 &point, const glm::vec3 &normal) const {
+        return DISPATCH_CONST(PDF, point, normal);
+    }
 };

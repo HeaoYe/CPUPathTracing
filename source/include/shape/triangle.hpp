@@ -1,8 +1,11 @@
 #pragma once
 
-#include "shape.hpp"
+#include "shape_sample.hpp"
+#include "camera/ray.hpp"
+#include "accelerate/bounds.hpp"
+#include <optional>
 
-struct Triangle : public Shape {
+struct Triangle {
     Triangle(
         const glm::vec3 &p0, const glm::vec3 &p1, const glm::vec3 &p2,
         const glm::vec3 &n0, const glm::vec3 &n1, const glm::vec3 &n2
@@ -19,9 +22,9 @@ struct Triangle : public Shape {
         n2 = normal;
     }
 
-    std::optional<HitInfo> intersect(const Ray &ray, float t_min, float t_max) const override;
+    std::optional<HitInfo> intersect(const Ray &ray, float t_min, float t_max) const;
 
-    Bounds getBounds() const override {
+    Bounds getBounds() const {
         Bounds bounds {};
         bounds.expand(p0);
         bounds.expand(p1);
@@ -29,8 +32,9 @@ struct Triangle : public Shape {
         return bounds;
     }
 
-    float getArea() const override;
-    std::optional<ShapeSample> sampleShape(const RNG &rng) const override;
+    float getArea() const;
+    std::optional<ShapeSample> sampleShape(const RNG &rng) const;
+    float PDF(const glm::vec3 &point, const glm::vec3 &normal) const { return 1.f / getArea(); }
 
     glm::vec3 p0, p1, p2;
     glm::vec3 n0, n1, n2;
