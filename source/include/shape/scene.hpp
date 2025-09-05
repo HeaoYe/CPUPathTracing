@@ -9,13 +9,14 @@ struct Scene : public Shape {
 public:
     void addShape(
         const Shape &shape,
-        const Material *material = nullptr,
+        const Material &material = {},
         const glm::vec3 &pos = { 0, 0, 0 },
         const glm::vec3 &scale = { 1, 1, 1 },
         const glm::vec3 &rotate = { 0, 0, 0 }
     );
 
-    void addAreaLight(const AreaLight *area_light, Material *material) {
+    template <typename MaterialType>
+    void addAreaLight(const AreaLight *area_light, MaterialType *material) {
         material->area_light = area_light;
         addShape(area_light->getShape(), material);
         light_sampler.addLight(area_light);

@@ -25,34 +25,34 @@ int main() {
     Model model("models/buddha.obj");
     scene.addShape(
         model,
-        new SpecularMaterial { RGB(241, 191, 79) },
+        { new SpecularMaterial { RGB(241, 191, 79) } },
         { -3, 1.75, 0 },
         { 4, 4, 4 }
     );
     scene.addShape(
         model,
-        new ConductorMaterial {
+        { new ConductorMaterial {
             { 1.2, 1.2, 5.3 },
             { 3.4, 3.4, 2.1 },
             0.8, 0.2
-        },
+        } },
         { -1, 1.75, 0 },
         { 4, 4, 4 }
     );
     scene.addShape(
         model,
-        new DielectricMaterial {
+        { new DielectricMaterial {
             1.4,
             { 1, 1, 1 },
             RGB(180, 180, 154),
             0.1, 0.3
-        },
+        } },
         { 1, 1.75, 0 },
         { 4, 4, 4 }
     );
     scene.addShape(
         model,
-        new DiffuseMaterial { RGB(241, 191, 79) },
+        { new DiffuseMaterial { RGB(241, 191, 79) } },
         { 3, 1.75, 0 },
         { 4, 4, 4 }
     );
@@ -61,14 +61,14 @@ int main() {
         { 0, 0, 0 },
         1
     };
-    scene.addShape(sphere, new SpecularMaterial { { 1, 1, 1 } }, { 0, 3.75, 3 });
+    scene.addShape(sphere, { new SpecularMaterial { { 1, 1, 1 } } }, { 0, 3.75, 3 });
 
     Plane ground {
         { 0, 0, 0 },
         { 0, 1, 0 },
         100
     };
-    scene.addShape(ground, new GroundMaterial { { 1, 1, 1 } });
+    scene.addShape(ground, { new GroundMaterial { { 1, 1, 1 } } });
 
     // Image env_image { "hdris/HdrOutdoorSnowMountainsEveningClear001_HDR_4K.exr" };
     // Image env_image { "hdris/qwantani_night_puresky_4k.exr" };
@@ -82,6 +82,11 @@ int main() {
     if (previewer.preview()) {
         path_tracing_renderer.render(32, "PT_MIS_TEST.exr");
     }
+
+    // raw: 18241 ms
+    // thread_local: 14387 ms
+    // tagged_ptr material: 14332 ms
+    // combined_ptr material: 14226 ms
 
     return 0;
 }

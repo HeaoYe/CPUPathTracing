@@ -15,8 +15,8 @@ glm::vec3 SimplePathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) 
     while (true) {
         auto hit_info = scene.intersect(ray);
         if (hit_info.has_value()) {
-            if (last_is_specular && hit_info->material && hit_info->material->area_light) {
-                L += beta * hit_info->material->area_light->getRadiance(ray.origin, hit_info->hit_point, hit_info->normal);
+            if (last_is_specular && hit_info->material.isValid() && hit_info->material.getAreaLight()) {
+                L += beta * hit_info->material.getAreaLight()->getRadiance(ray.origin, hit_info->hit_point, hit_info->normal);
             }
 
             if (rng.uniform() > q) {
@@ -26,27 +26,27 @@ glm::vec3 SimplePathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) 
 
             Frame frame(hit_info->normal);
             glm::vec3 light_direction;
-            if (hit_info->material) {
+            if (hit_info->material.isValid()) {
                 glm::vec3 view_direction = frame.localFromWorld(-ray.direction);
                 if (view_direction.y == 0) {
                     ray.origin = hit_info->hit_point;
                     continue;
                 }
 
-                last_is_specular = hit_info->material->isDeltaDistribution();
+                last_is_specular = hit_info->material.isDeltaDistribution();
                 if (!last_is_specular) {
                     auto light_source_sample = scene.getLightSampler(false).sample(rng.uniform());
                     if (light_source_sample.has_value()) {
                         auto light_sample = light_source_sample->light->sampleLight(hit_info->hit_point, scene.getRadius(), rng, false);
                         if (light_sample.has_value() && (!scene.intersect({ hit_info->hit_point, light_sample->light_point - hit_info->hit_point }, 1e-5, 1.f - 1e-5))) {
                             glm::vec3 light_direction_local = frame.localFromWorld(light_sample->light_direction);
-                            L += beta * hit_info->material->BSDF(hit_info->hit_point, light_direction_local, view_direction)
+                            L += beta * hit_info->material.BSDF(hit_info->hit_point, light_direction_local, view_direction)
                                 * glm::abs(light_direction_local.y) * light_sample->Le / (light_sample->pdf * light_source_sample->prob);
                         }
                     }
                 }
 
-                auto bsdf_sample = hit_info->material->sampleBSDF(hit_info->hit_point, view_direction, rng);
+                auto bsdf_sample = hit_info->material.sampleBSDF(hit_info->hit_point, view_direction, rng);
                 if (!bsdf_sample.has_value()) {
                     break;
                 }
