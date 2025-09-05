@@ -1,5 +1,5 @@
 #pragma once
 
-#include "renderer/base_renderer.hpp"
+#include "define_renderer.hpp"
 
 DEFINE_RENDERER(PathTracing)

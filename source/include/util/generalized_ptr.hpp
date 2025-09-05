@@ -136,7 +136,7 @@ protected:
     auto Dispatch(Func &&func) {
         if constexpr (MAX_TS == 0) {
         }
-        #define C(idx) case idx: if (isConst()) return func(constCast<idx>()); else return func(cast<idx>());
+        #define C(idx) case idx: if (!pointer.isConst()) return func(cast<idx>()); else { assert(false); return func(cast<idx>()); }
         BODY()
         #undef C
         else {

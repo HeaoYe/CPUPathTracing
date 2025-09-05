@@ -3,14 +3,14 @@
 #include "renderer/debug_renderer.hpp"
 #include "thread/thread_pool.hpp"
 
-Previewer::Previewer(BaseRenderer &base_renderer, float fps) : base_renderer(base_renderer), fps(fps) {
-    auto &film = base_renderer.camera.getFilm();
+Previewer::Previewer(Renderer renderer, float fps) : renderer(renderer), fps(fps) {
+    auto &film = renderer.getCamera().getFilm();
     film_resolution = { film.getWidth(), film.getHeight() };
 
-    render_modes.push_back(&base_renderer);
-    render_modes.push_back(new NormalRenderer(base_renderer.camera, base_renderer.scene));
-    DEBUG_LINE(render_modes.push_back(new BoundsTestCountRenderer(base_renderer.camera, base_renderer.scene)));
-    DEBUG_LINE(render_modes.push_back(new TriangleTestCountRenderer(base_renderer.camera, base_renderer.scene)));
+    render_modes.push_back(renderer);
+    render_modes.push_back({ new NormalRenderer(renderer.getCamera(), renderer.getScene()) });
+    DEBUG_LINE(render_modes.push_back({ new BoundsTestCountRenderer(renderer.getCamera(), renderer.getScene()) }));
+    DEBUG_LINE(render_modes.push_back({ new TriangleTestCountRenderer(renderer.getCamera(), renderer.getScene()) }));
 
     scale = 1;
 }
@@ -26,7 +26,7 @@ bool Previewer::preview() {
     texture->setSmooth(true);
     sprite = std::make_shared<sf::Sprite>(*texture);
     setResolution(0.1);
-    auto &camera = base_renderer.camera;
+    auto &camera = renderer.getCamera();
     auto &film = camera.getFilm();
 
     bool grabbed = false;
@@ -128,9 +128,9 @@ bool Previewer::preview() {
 }
 
 void Previewer::renderFrame() {
-    auto *renderer = render_modes[render_mode_idx];
+    auto current_renderer = render_modes[render_mode_idx];
     size_t render_spp = render_mode_idx == 0 ? 4 : 1;
-    auto &film = renderer->camera.getFilm();
+    auto &film = current_renderer.getCamera().getFilm();
 
     if (current_spp == 0) {
         film.clear();
@@ -138,7 +138,7 @@ void Previewer::renderFrame() {
 
     thread_pool.parallelFor(film.getWidth(), film.getHeight(), [&](size_t x, size_t y) {
         for (size_t i = current_spp; i < current_spp + render_spp; i ++) {
-            film.addSample(x, y, renderer->renderPixel({ x, y, i }));
+            film.addSample(x, y, current_renderer.renderPixel({ x, y, i }));
         }
     });
     thread_pool.wait();
@@ -154,7 +154,7 @@ void Previewer::setResolution(float scale) {
     glm::ivec2 resolution = scale * glm::vec2(film_resolution);
     if (resolution.x == 0) resolution.x = 1;
     if (resolution.y == 0) resolution.y = 1;
-    base_renderer.camera.getFilm().setResolution(resolution.x, resolution.y);
+    renderer.getCamera().getFilm().setResolution(resolution.x, resolution.y);
     auto res = texture->resize(sf::Vector2u(resolution.x, resolution.y));
     sprite->setTexture(*texture);
     sprite->setScale(sf::Vector2f(static_cast<float>(film_resolution.x) / resolution.x, static_cast<float>(film_resolution.y) / resolution.y));

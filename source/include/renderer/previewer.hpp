@@ -1,21 +1,21 @@
 #pragma once
 
-#include "base_renderer.hpp"
+#include "renderer.hpp"
 #include <vector>
 #include <memory>
 #include <SFML/Graphics.hpp>
 
 class Previewer {
 public:
-    Previewer(BaseRenderer &base_renderer, float fps = 30);
+    Previewer(Renderer renderer, float fps = 30);
     bool preview();
 private:
     void renderFrame();
     void setResolution(float scale);
     void adjustResolution(float dt);
 private:
-    BaseRenderer &base_renderer;
-    std::vector<BaseRenderer *> render_modes;
+    Renderer renderer;
+    std::vector<Renderer> render_modes;
     size_t render_mode_idx = 0;
 
     float scale;

@@ -78,19 +78,25 @@ int main() {
     scene.build();
 
     PathTracingRenderer path_tracing_renderer { camera, scene };
-    Previewer previewer(path_tracing_renderer);
+    Previewer previewer({ &path_tracing_renderer });
     if (previewer.preview()) {
         path_tracing_renderer.render(32, "PT_MIS_TEST.exr");
     }
 
     // raw: 18241 ms
     // thread_local: 14387 ms
+
     // combined_ptr material: 14226 ms
     // tagged_ptr material: 14332 ms
+
     // combined_ptr shape: 13554 ms
     // tagged_ptr shape: 13198 ms
+
     // combined_ptr light: 13214 ms
     // tagged_ptr light: 13028 ms
+
+    // combined_ptr renderer: 13030 ms
+    // tagged_ptr renderer: 13072 ms
 
     return 0;
 }
