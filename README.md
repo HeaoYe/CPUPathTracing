@@ -8,7 +8,54 @@
 * 尽量避免使用C++**高级语言特性**
 
 ## 已实现的渲染效果
-![当前以实现的渲染结果](https://github.com/HeaoYe/CPUPathTracing/blob/main/resource/L21.png)
+![当前以实现的渲染结果](resource/L21.png)
+
+## 代码构建
+1. 下载源码
+   ```bash
+   git clone https://github.com/HeaoYe/CPUPathTracing
+   ```
+2. 进入代码文件夹 更新子模块
+   ```bash
+   cd CPUPathTracing
+   git submodule update --init --recursive
+   ```
+3. 下载模型与贴图文件
+   - 新建models和hdris文件夹
+   - 下载[模型与贴图文件](https://github.com/HeaoYe/CPUPathTracing/releases/tag/%E6%A8%A1%E5%9E%8B%E4%B8%8E%E8%B4%B4%E5%9B%BE%E6%96%87%E4%BB%B6)
+   - 将.obj模型文件放入models文件夹
+   - 将.exr贴图文件放入hdris文件夹
+   - 文件夹结构预览
+    ```txt
+    CPUPathTracing
+    ├── hdris
+    │   ├── HdrOutdoorSnowMountainsEveningClear001_HDR_4K.exr
+    │   ├── kloppenheim_07_puresky_4k.exr
+    │   └── qwantani_night_puresky_4k.exr
+    ├── models
+    │   ├── buddha.obj
+    │   ├── dragon_871k.obj
+    │   ├── dragon_87k.obj
+    │   └── simple_dragon.obj
+    ├── resource/
+    ├── source/
+    ├── thirdparty/
+    ├── .vscode/
+    ├── CMakeLists.txt
+    ├── .gitignore
+    ├── .gitmodules
+    ├── README.md
+    └── LICENSE
+    ```
+4. 编译
+   ```bash
+   cmake -B build
+   cmake --build build -j 8
+   ```
+6. 运行
+   ```bash
+   ./build/source/CPUPathTracing
+   ```
 
 ## 课程列表（持续建设中...）
 - [x] [第1讲 课程介绍](https://www.bilibili.com/video/BV1MJYAeYEDk)
