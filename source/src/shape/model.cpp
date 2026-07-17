@@ -50,9 +50,15 @@ Model::Model(const std::filesystem::path &filename) {
                         result.attributes.normals[index.normal_index * 3 + 1],
                         result.attributes.normals[index.normal_index * 3 + 2]
                     };
-                    triangles.push_back(Triangle {
-                        pos0, pos1, pos2, normal0, normal1, normal2
-                    });
+                    if ((normal0 == glm::vec3(0)) || (normal1 == glm::vec3(0)) || (normal2 == glm::vec3(0))) {
+                        triangles.push_back(Triangle {
+                            pos0, pos1, pos2
+                        });
+                    } else {
+                        triangles.push_back(Triangle {
+                            pos0, pos1, pos2, normal0, normal1, normal2
+                        });
+                    }
                 } else {
                     triangles.push_back(Triangle {
                         pos0, pos1, pos2

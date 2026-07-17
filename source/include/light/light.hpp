@@ -13,7 +13,7 @@ struct LightSample {
 
 class Light {
 public:
-    virtual bool impossible() const = 0;
+    virtual bool skipMISCompensation() const = 0;
 
     virtual float Phi(float scene_radius) const = 0;
     virtual std::optional<LightSample> sampleLight(const glm::vec3 &surface_point, float scene_radius, const RNG &rng, bool allow_mis_compensation) const = 0;

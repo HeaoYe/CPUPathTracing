@@ -5,17 +5,14 @@ ThreadPool thread_pool {};
 
 void ThreadPool::WorkerThread(ThreadPool *master) {
     while (master->alive == 1) {
-        if (master->tasks.empty()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(2));
-            continue;
-        }
         Task *task = master->getTask();
         if (task != nullptr) {
             task->run();
             delete task;
             master->pending_task_count --;
         } else {
-            std::this_thread::yield();
+            std::this_thread::sleep_for(std::chrono::milliseconds(2));
+            continue;
         }
     }
 }
@@ -25,6 +22,9 @@ ThreadPool::ThreadPool(size_t thread_count) {
     pending_task_count = 0;
     if (thread_count == 0) {
         thread_count = std::thread::hardware_concurrency();
+        if (thread_count == 0) {
+            thread_count = 1;
+        }
     }
     for (size_t i = 0; i < thread_count; i ++) {
         threads.push_back(std::thread(ThreadPool::WorkerThread, this));
@@ -46,8 +46,8 @@ public:
         : x(x), y(y), chunk_width(chunk_width), chunk_height(chunk_height), lambda(lambda) {}
 
     void run() override {
-        for (size_t idx_x = 0; idx_x < chunk_width; idx_x ++) {
-            for (size_t idx_y = 0; idx_y < chunk_height; idx_y ++) {
+        for (size_t idx_y = 0; idx_y < chunk_height; idx_y ++) {
+            for (size_t idx_x = 0; idx_x < chunk_width; idx_x ++) {
                 lambda(x + idx_x, y + idx_y);
             }
         }

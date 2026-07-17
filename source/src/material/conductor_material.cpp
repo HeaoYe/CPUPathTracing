@@ -13,7 +13,7 @@ glm::vec3 Fresnel(const glm::vec3 &ior, const glm::vec3 &k, float cos_theta_i) {
         Complex r_parl = (etat_div_etai * cos_theta_i - cos_theta_t) / (etat_div_etai * cos_theta_i + cos_theta_t);
         Complex r_perp = (cos_theta_i - etat_div_etai * cos_theta_t) / (cos_theta_i + etat_div_etai * cos_theta_t);
 
-        fr[i] = 0.5 * (norm(r_parl) + norm(r_perp));
+        fr[i] = 0.5 * (lengthSquared(r_parl) + lengthSquared(r_perp));
     }
     return fr;
 }

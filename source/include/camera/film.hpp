@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 
 struct Pixel {
-    glm::vec3 color { 0, 0, 0 };
+    glm::dvec3 color { 0, 0, 0 };
     int sample_count { 0 };
 };
 

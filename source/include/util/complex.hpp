@@ -45,13 +45,21 @@ inline Complex operator/(Complex lhs, float rhs) {
 }
 
 inline float norm(Complex rhs) {
+    return rhs.a * rhs.a + rhs.b * rhs.b;
+}
+
+inline float lengthSquared(Complex rhs) {
+    return rhs.a * rhs.a + rhs.b * rhs.b;
+}
+
+inline float length(Complex rhs) {
     return std::sqrt(rhs.a * rhs.a + rhs.b * rhs.b);
 }
 
 inline Complex sqrt(Complex rhs) {
-    float rhs_norm = norm(rhs);
+    float rhs_length = length(rhs);
     return {
-        std::sqrt((rhs_norm + rhs.a) * 0.5f),
-        std::sqrt((rhs_norm - rhs.a) * 0.5f),
+        std::sqrt((rhs_length + rhs.a) * 0.5f),
+        std::copysign(std::sqrt((rhs_length - rhs.a) * 0.5f), rhs.b),
     };
 }

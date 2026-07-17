@@ -5,7 +5,7 @@
 class UniformInfiniteLight : public Light {
 public:
     UniformInfiniteLight(const glm::vec3 &Le) : Le(Le) {}
-    bool impossible() const override { return true; }
+    bool skipMISCompensation() const override { return true; }
 
     float Phi(float scene_radius) const override;
     std::optional<LightSample> sampleLight(const glm::vec3 &surface_point, float scene_radius, const RNG &rng, bool allow_mis_compensation) const override;
