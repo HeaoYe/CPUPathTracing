@@ -119,6 +119,9 @@ bool Previewer::preview() {
         window->display();
 
         dt = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count() * 0.001f;
+        if (dt == 0) {
+            dt = 0.001f;
+        }
         adjustResolution(dt);
     }
 

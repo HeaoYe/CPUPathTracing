@@ -6,7 +6,7 @@
 class AreaLight : public Light {
 public:
     AreaLight(const Shape &shape, const glm::vec3 &Le, bool double_side) : shape(shape), Le(Le), double_side(double_side) {}
-    bool impossible() const override { return false; }
+    bool skipMISCompensation() const override { return false; }
 
     float Phi(float scene_radius) const override;
     std::optional<LightSample> sampleLight(const glm::vec3 &surface_point, float scene_radius, const RNG &rng, bool allow_mis_compensation) const override;

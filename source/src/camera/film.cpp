@@ -14,7 +14,7 @@ void Film::save(const std::filesystem::path &filename) const {
         if (pixel.sample_count == 0) {
             return;
         }
-        buffer[y * width + x] = pixel.color / static_cast<float>(pixel.sample_count);
+        buffer[y * width + x] = pixel.color / static_cast<double>(pixel.sample_count);
     }, false);
     thread_pool.wait();
 
@@ -31,7 +31,7 @@ std::vector<uint8_t> Film::generateRGBABuffer() {
             if (pixel.sample_count == 0) {
                 continue;;
             }
-            RGB rgb(pixel.color / static_cast<float>(pixel.sample_count));
+            RGB rgb(pixel.color / static_cast<double>(pixel.sample_count));
             auto idx = (y * width + x) * 4;
             buffer[idx + 0] = rgb.r;
             buffer[idx + 1] = rgb.g;

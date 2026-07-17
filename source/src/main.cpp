@@ -199,3 +199,9 @@ int main() {
 
 // parallel build bvh
 // Load buddha.obj 1084k：587ms
+
+// mt19937
+// render 32spp: 17706ms
+
+// PCG32
+// render 32spp: 12647ms

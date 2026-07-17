@@ -24,7 +24,7 @@ public:
 
     void addInfiniteLight(const Light *infinite_light) {
         light_sampler.addLight(infinite_light);
-        if (!infinite_light->impossible()) {
+        if (!infinite_light->skipMISCompensation()) {
             light_sampler_compensated.addLight(infinite_light);
         }
         infinite_lights.push_back(infinite_light);
