@@ -79,7 +79,10 @@
 - [x] [第19讲 多重重要性采样](https://www.bilibili.com/video/BV1fob4zFEMA)
 - [x] [第20讲 BVH构建优化](https://www.bilibili.com/video/BV1SReLz8E2V)
 - [x] [第21讲 环境光照](https://www.bilibili.com/video/BV17ZeUzqEqg)
-- [ ] 第22讲 光谱渲染
-- [ ] 第23讲 体渲染
-- [ ] 第24讲 微表面理论——多重散射
-- [ ] 第25讲 材质与采样
+- [x] [第22讲 代码勘误和一些改进](https://www.bilibili.com/video/BV1GiNZ6aEJD)
+- [ ] 第23讲 光谱渲染（上）
+- [ ] 第24讲 光谱渲染（中）
+- [ ] 第25讲 光谱渲染（下）
+- [ ] 第26讲 体渲染?
+- [ ] 第27讲 微表面理论——多重散射?
+- [ ] 第28讲 材质与采样?
