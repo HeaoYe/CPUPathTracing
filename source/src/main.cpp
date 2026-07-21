@@ -16,7 +16,46 @@
 #include "renderer/simple_path_tracing_renderer.hpp"
 #include "renderer/previewer.hpp"
 
+#include "spectrum/constant_spectrum.hpp"
+#include "spectrum/blackbody_spectrum.hpp"
+#include "spectrum/illuminant_spectrum.hpp"
+#include "spectrum/illuminant.hpp"
+#include "color/XYZ.hpp"
+#include "color/RGB.hpp"
+#include "color/color_space.hpp"
+#include <iostream>
+
 int main() {
+    InitColorSpace();
+
+    ConstantSpectrum EEW { 1 };
+    XYZ xyz_eew { EEW };
+    std::cout << "EEW X: " << xyz_eew.X << "  EEW Y: " << xyz_eew.Y << "  EEW Z: " << xyz_eew.Z << '\n';
+
+    XYZ xyz_d65 { CIE_standard_illumt_D65 };
+    xy xy_d65 { xyz_d65 };
+    std::cout << "D65 x: " << xy_d65.x << "  D65 y: " << xy_d65.y << '\n';
+
+    BlackbodySpectrum blackbody_6504k { 6504 };
+    XYZ xyz_65k { blackbody_6504k };
+    xy xy_65k { xyz_65k };
+    std::cout << "6504K x: " << xy_65k.x << "  6504K y: " << xy_65k.y << '\n';
+
+    LinearRGB rgb_d65_srgb = ColorSpace_sRGB->RGBFromXYZ(xyz_d65);
+    LinearRGB rgb_d65_dci_p3 = ColorSpace_DCI_P3->RGBFromXYZ(xyz_d65);
+    std::cout << "sRGB D65 R: " << rgb_d65_srgb.r << "  sRGB D65 R: " << rgb_d65_srgb.g << "  sRGB D65 B: " << rgb_d65_srgb.b << '\n';
+    std::cout << "DCI-P3 D65 R: " << rgb_d65_dci_p3.r << "  DCI-P3 D65 R: " << rgb_d65_dci_p3.g << "  DCI-P3 D65 B: " << rgb_d65_dci_p3.b << '\n';
+
+    IlluminantSpectrum d65_600nit { CIE_standard_illumt_D65, 600 };
+    LinearRGB rgb_d65_600nit_srgb = ColorSpace_sRGB->RGBFromXYZ(XYZ { d65_600nit });
+    std::cout << "sRGB D65 600nit R: " << rgb_d65_600nit_srgb.r << "  sRGB D65 600nit R: " << rgb_d65_600nit_srgb.g << "  sRGB D65 600nit B: " << rgb_d65_600nit_srgb.b << '\n';
+
+    EncodedRGB encoded_rgb_d65_600nit_srgb = ColorSpace_sRGB->encode(rgb_d65_600nit_srgb);
+    auto encoded_rgb = encoded_rgb_d65_600nit_srgb.toBytes(8);
+    std::cout << "sRGB D65 600nit R: " << encoded_rgb.r << "  sRGB D65 600nit R: " << encoded_rgb.g << "  sRGB D65 600nit B: " << encoded_rgb.b << '\n';
+
+    return 0;
+
     Film film { 192 * 10, 108 * 10 };
     Camera camera { film, { 0, 1.25, -6 }, { 0, 1.95, 0 }, 45 };
 
