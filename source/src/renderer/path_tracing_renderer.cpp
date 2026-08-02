@@ -8,9 +8,13 @@ float PowerHeuristic(float pdf_j, float pdf_k) {
 
 glm::vec3 PathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
     thread_local RNG rng {};
-    rng.setState(pixel_coord.x + pixel_coord.y * camera.getFilm().getWidth(), pixel_coord.z);
+    rng.setState(
+        pixel_coord.x + pixel_coord.y * camera.getFilm().getWidth(),
+        (pixel_coord.x + 1) * (pixel_coord.y + 1) * pixel_coord.z
+    );
 
     auto ray = camera.generateRay(pixel_coord, { rng.uniform(), rng.uniform() });
+    size_t depth = 0;
     glm::vec3 beta = { 1, 1, 1 };
     glm::vec3 L = { 0, 0, 0 };
     bool last_is_specular = true;
@@ -20,6 +24,8 @@ glm::vec3 PathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
     const LightSampler &light_sampler = scene.getLightSampler(allow_mis_compensation);
 
     while (true) {
+        ++ depth;
+
         auto hit_info = scene.intersect(ray);
         if (hit_info.has_value()) {
             if (hit_info->material && hit_info->material->area_light) {
@@ -32,14 +38,16 @@ glm::vec3 PathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
                 L += weight_bsdf * beta * hit_info->material->area_light->getRadiance(ray.origin, hit_info->hit_point, hit_info->normal);
             }
 
-            glm::vec3 beta_q = beta * eta_scale;
-            float q = glm::max(beta_q.r, glm::max(beta_q.g, beta_q.b));
-            q = glm::min(q, 0.9f);
-            if (q < 1) {
-                if (rng.uniform() > q) {
-                    break;
+            if (depth > 3) {
+                glm::vec3 beta_q = beta * eta_scale;
+                float q = glm::max(beta_q.r, glm::max(beta_q.g, beta_q.b));
+                q = glm::min(q, 0.9f);
+                if (q < 1) {
+                    if (rng.uniform() > q) {
+                        break;
+                    }
+                    beta /= q;
                 }
-                beta /= q;
             }
 
             Frame frame(hit_info->normal);

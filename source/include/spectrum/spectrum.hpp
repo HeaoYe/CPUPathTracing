@@ -11,6 +11,8 @@ public:
     virtual float operator[](float lambda) const = 0;
 
     virtual float max() const { return maximum; }
+
+    virtual bool isConstant() const { return false; }
 protected:
     float lambda_min {}, lambda_max {};
     float maximum {};

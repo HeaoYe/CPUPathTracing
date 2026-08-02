@@ -7,11 +7,7 @@ Camera::Camera(Film &film, const glm::vec3 &pos, const glm::vec3 &viewpoint, flo
     view_direction = glm::normalize(viewpoint - pos);
     update();
     theta = glm::degrees(glm::acos(view_direction.y));
-    if (glm::abs(view_direction.y) == 1) {
-        phi = 0;
-    } else {
-        phi = glm::degrees(glm::acos(view_direction.x / glm::sqrt(view_direction.x * view_direction.x + view_direction.z * view_direction.z)));
-    }
+    phi = glm::degrees(glm::atan(view_direction.z, view_direction.x));
 }
 
 Ray Camera::generateRay(const glm::ivec2 &pixel_coord, const glm::vec2 &offset) const {

@@ -4,7 +4,10 @@
 
 glm::vec3 SimplePathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
     thread_local RNG rng {};
-    rng.setState(pixel_coord.x + pixel_coord.y * camera.getFilm().getWidth(), pixel_coord.z);
+    rng.setState(
+        pixel_coord.x + pixel_coord.y * camera.getFilm().getWidth(),
+        (pixel_coord.x + 1) * (pixel_coord.y + 1) * pixel_coord.z
+    );
 
     auto ray = camera.generateRay(pixel_coord, { rng.uniform(), rng.uniform() });
     glm::vec3 beta = { 1, 1, 1 };

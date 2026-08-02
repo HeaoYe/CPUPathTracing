@@ -35,7 +35,7 @@ public:
         }
     }
 
-    float operator[](float lambda) const {
+    float operator[](float lambda) const override {
         auto offset = std::lround(lambda - lambda_min);
         if (offset < 0 || offset >= values.size()) {
             return 0;

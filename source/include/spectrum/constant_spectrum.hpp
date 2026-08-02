@@ -9,10 +9,12 @@ public:
         maximum = constant;
     }
 
-    float operator[](float lambda) const {
+    float operator[](float lambda) const override {
         if (lambda < lambda_min || lambda > lambda_max) {
             return 0;
         }
         return maximum;
     }
+
+    bool isConstant() const override { return true; }
 };

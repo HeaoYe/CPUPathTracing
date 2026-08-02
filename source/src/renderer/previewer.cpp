@@ -165,6 +165,10 @@ void Previewer::setResolution(float scale) {
 }
 
 void Previewer::adjustResolution(float dt) {
+    float render_spp = render_mode_idx == 0 ? 4 : 1;
+    if (current_spp / render_spp > fps * 3) {
+        return;
+    }
     float expected_dt = 1.f / fps;
     if (glm::abs(expected_dt - dt) / expected_dt > 0.4f) {
         float new_scale = scale * (1.f + 0.1f * (glm::sqrt(expected_dt / dt) - 1.f));

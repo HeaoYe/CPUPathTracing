@@ -36,7 +36,7 @@ glm::vec3 AreaLight::getRadiance(const glm::vec3 &surface_point, const glm::vec3
 }
 
 float AreaLight::getPDF(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal, bool allow_mis_compensation) const {
-    float cos_theta = glm::dot(surface_point - light_point, normal);
+    float cos_theta = glm::dot(glm::normalize(surface_point - light_point), normal);
     if (cos_theta == 0) {
         return 0;
     }
@@ -45,5 +45,5 @@ float AreaLight::getPDF(const glm::vec3 &surface_point, const glm::vec3 &light_p
     }
     glm::vec3 light_direction_raw = light_point - surface_point;
     float det_J = glm::abs(cos_theta / glm::dot(light_direction_raw, light_direction_raw));
-    return shape.PDF(surface_point, normal) / det_J;
+    return shape.PDF(light_point, normal) / det_J;
 }
