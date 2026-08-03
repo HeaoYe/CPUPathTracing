@@ -3,6 +3,8 @@
 #include "spectrum.hpp"
 #include <vector>
 #include <algorithm>
+#include <filesystem>
+#include <string>
 
 class PiecewiseLinearSpectrum : public Spectrum {
 public:
@@ -10,6 +12,13 @@ public:
         float lambda;
         float value;
     };
+public:
+    static PiecewiseLinearSpectrum LoadCSV(
+        const std::filesystem::path &filename,
+        const std::string &header_name_lambda,
+        float lambda_scale,
+        const std::string &header_name_value
+    );
 public:
     explicit PiecewiseLinearSpectrum(const std::vector<SamplePoint> &samples)
         : Spectrum(samples.front().lambda, samples.back().lambda) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include <array>
 
 class LinearRGB {
 public:
@@ -30,6 +31,48 @@ public:
 };
 
 class EncodedRGB {
+public:
+    inline static EncodedRGB GenerateHeatmapRGB(float t) {
+        std::array<EncodedRGB, 25> color_pallet {
+            EncodedRGB { 68, 1, 84 },
+            EncodedRGB { 71, 17, 100 },
+            EncodedRGB { 72, 31, 112 },
+            EncodedRGB { 71, 45, 123 },
+            EncodedRGB { 68, 58, 131 },
+
+            EncodedRGB { 64, 70, 136 },
+            EncodedRGB { 59, 82, 139 },
+            EncodedRGB { 54, 93, 141 },
+            EncodedRGB { 49, 104, 142 },
+            EncodedRGB { 44, 114, 142 },
+
+            EncodedRGB { 40, 124, 142 },
+            EncodedRGB { 36, 134, 142 },
+            EncodedRGB { 33, 144, 140 },
+            EncodedRGB { 31, 154, 138 },
+            EncodedRGB { 32, 164, 134 },
+
+            EncodedRGB { 39, 173, 129 },
+            EncodedRGB { 53, 183, 121 },
+            EncodedRGB { 71, 193, 110 },
+            EncodedRGB { 93, 200, 99 },
+            EncodedRGB { 117, 208, 84 },
+
+            EncodedRGB { 143, 215, 68 },
+            EncodedRGB { 170, 220, 50 },
+            EncodedRGB { 199, 224, 32 },
+            EncodedRGB { 227, 228, 24 },
+            EncodedRGB { 253, 231, 37 },
+        };
+
+        if (t < 0 || t >= 1) {
+            return EncodedRGB { 255, 0, 0 };
+        }
+        float idx_float = t * (color_pallet.size() - 1);
+        size_t idx = glm::floor(idx_float);
+        float s = glm::fract(idx_float);
+        return EncodedRGB { color_pallet[idx].data * (1 - s) + color_pallet[idx + 1].data * s };
+    }
 public:
     EncodedRGB() = default;
 

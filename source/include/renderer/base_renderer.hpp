@@ -8,16 +8,16 @@
     public: \
         Name##Renderer(Camera &camera, const Scene &scene) : BaseRenderer(camera, scene) {} \
     private: \
-        glm::vec3 renderPixel(const glm::ivec3 &pixel_coord) override; \
+        PixelSample renderPixel(const glm::ivec3 &pixel_coord, const ColorSpace *target_color_space) override; \
     }; \
 
 class BaseRenderer {
     friend class Previewer;
 public:
     BaseRenderer(Camera &camera, const Scene &scene) : camera(camera), scene(scene) {}
-    void render(size_t spp, const std::filesystem::path &filename);
+    void render(size_t spp, const std::filesystem::path &filename, const ColorSpace *target_color_space);
 private:
-    virtual glm::vec3 renderPixel(const glm::ivec3 &pixel_coord) = 0;
+    virtual PixelSample renderPixel(const glm::ivec3 &pixel_coord, const ColorSpace *target_color_space) = 0;
 protected:
     Camera &camera;
     const Scene &scene;

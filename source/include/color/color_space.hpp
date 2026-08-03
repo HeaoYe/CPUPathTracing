@@ -29,6 +29,11 @@ public:
             transfer_function.encode(linear_rgb.b()),
         } };
     }
+
+    xy getRed() const { return r; }
+    xy getGreen() const { return g; }
+    xy getBlue() const { return b; }
+    xy getWhite() const { return w; }
 private:
     void calculateMatrix(xy r, xy g, xy b, XYZ W);
 private:

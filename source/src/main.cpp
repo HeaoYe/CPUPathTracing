@@ -3,7 +3,6 @@
 #include "shape/model.hpp"
 #include "shape/plane.hpp"
 #include "shape/scene.hpp"
-#include "util/rgb.hpp"
 #include "image/image.hpp"
 #include "material/diffuse_material.hpp"
 #include "material/specular_material.hpp"
@@ -17,81 +16,135 @@
 #include "renderer/previewer.hpp"
 
 #include "spectrum/constant_spectrum.hpp"
-#include "spectrum/blackbody_spectrum.hpp"
+#include "spectrum/piecewise_linear_spectrum.hpp"
+#include "spectrum/densely_sampled_spectrum.hpp"
 #include "spectrum/illuminant_spectrum.hpp"
 #include "spectrum/illuminant.hpp"
-#include "color/XYZ.hpp"
-#include "color/RGB.hpp"
 #include "color/color_space.hpp"
-#include <iostream>
+
+PiecewiseLinearSpectrum *FromRGB(uint32_t r, uint32_t g, uint32_t b) {
+    auto data = ColorSpace_sRGB->decode(EncodedRGB { r, g, b });
+    return new PiecewiseLinearSpectrum {
+        {
+            { 360, data.b() / 3.f },
+            { 400, data.b() },
+            { 525, data.g() },
+            { 650, data.r() },
+            { 830, data.r() / 3.f },
+        }
+    };
+}
 
 int main() {
     InitColorSpace();
 
     Film film { 192 * 10, 108 * 10 };
-    Camera camera { film, { 0, 1.25, -6 }, { 0, 1.95, 0 }, 45 };
+    Camera camera { film, { 0, 4, -8 }, { 0, 2.1, 0.2 }, 48 };
 
     Scene scene {};
 
-    Model model("models/buddha.obj");
-    scene.addShape(
-        model,
-        new SpecularMaterial { RGB(241, 191, 79) },
-        { -3, 1.75, 0 },
-        { 4, 4, 4 }
-    );
-    scene.addShape(
-        model,
-        new ConductorMaterial {
-            { 1.2, 1.2, 5.3 },
-            { 3.4, 3.4, 2.1 },
-            0.8, 0.2
-        },
-        { -1, 1.75, 0 },
-        { 4, 4, 4 }
-    );
-    scene.addShape(
-        model,
-        new DielectricMaterial {
-            1.4,
-            { 1, 1, 1 },
-            RGB(180, 180, 154),
-            0.1, 0.3
-        },
-        { 1, 1.75, 0 },
-        { 4, 4, 4 }
-    );
-    scene.addShape(
-        model,
-        new DiffuseMaterial { RGB(241, 191, 79) },
-        { 3, 1.75, 0 },
-        { 4, 4, 4 }
-    );
+    Model buddha("models/buddha.obj");
+    Model dragon("models/dragon_871k.obj");
 
-    Sphere sphere {
-        { 0, 0, 0 },
-        1
+    ConstantSpectrum constant_1 { 1 };
+
+    auto copper_eta = PiecewiseLinearSpectrum::LoadCSV(
+        "spectrums/Johnson-copper.csv", "wl", 1e3, "n");
+    auto copper_k = PiecewiseLinearSpectrum::LoadCSV(
+        "spectrums/Johnson-copper.csv", "wl", 1e3, "k");
+    ConductorMaterial copper { &copper_eta, &copper_k, 0.5, 0.42 };
+    auto glass_eta = PiecewiseLinearSpectrum::LoadCSV(
+        "spectrums/Zelmon-glass.csv", "wl", 1e3, "n");
+    DielectricMaterial glass { &glass_eta, FromRGB(210, 210, 184), 0.21, 0.08 };
+
+    scene.addShape(buddha, &copper, { -5.0, 1.78, 1.7 }, { 4, 4, 4 });
+    scene.addShape(buddha, &glass, { -2.1, 1.78, 1.7 }, { 4, 4, 4 });
+    scene.addShape(buddha, &glass, { 2.1, 1.78, 1.7 }, { 4, 4, 4 });
+    scene.addShape(buddha, &copper, { 5.0, 1.78, 1.7 }, { 4, 4, 4 });
+
+    Sphere sphere { { 0, 0, 0 }, 0.45 };
+    PiecewiseLinearSpectrum sphere_eta {
+        {
+            {
+                { 360, 1.60 },
+                { 400, 1.57 },
+                { 525, 1.52 },
+                { 650, 1.48 },
+                { 830, 1.45 },
+            }
+        }
     };
-    scene.addShape(sphere, new SpecularMaterial { { 1, 1, 1 } }, { 0, 3.75, 3 });
+    DielectricMaterial sphere_mat { &sphere_eta, &constant_1 };
+    scene.addShape(sphere, &sphere_mat, { -1, 0.55, -1.65 });
+    scene.addShape(sphere, &sphere_mat, { 1, 0.55, -1.65 });
+
+    auto metameric_A_reflectance = DenselySampledSpectrum::LoadCSV(
+        "spectrums/Metameric_A_reflectance.csv", "wavelength_nm", "reflectance");
+    DiffuseMaterial metameric_A { &metameric_A_reflectance };
+    auto metameric_B_reflectance = DenselySampledSpectrum::LoadCSV(
+        "spectrums/Metameric_B_reflectance.csv", "wavelength_nm", "reflectance");
+    DiffuseMaterial metameric_B { &metameric_B_reflectance };
+
+    scene.addShape(dragon, &metameric_A, { -4.3, 0.7, -1.65 }, { 2, 2, 2 }, { 0, -90, 0 });
+    scene.addShape(dragon, &metameric_B, { -2.4, 0.7, -1.65 }, { 2, 2, 2 }, { 0, -90, 0 });
+    scene.addShape(dragon, &metameric_B, { 2.4, 0.7, -1.65 }, { 2, 2, 2 }, { 0, 90, 0 });
+    scene.addShape(dragon, &metameric_A, { 4.3, 0.7, -1.65 }, { 2, 2, 2 }, { 0, 90, 0 });
+
+    IlluminantSpectrum illumt_D65 { CIE_standard_illumt_D65, 2400 };
+    std::array<glm::vec3, 4> vectices_D65 {
+        glm::vec3 { -6.0, 5.2, -0.2 },
+        glm::vec3 { -6.0, 5.2, 2.4 },
+        glm::vec3 { -1.2, 5.2, -0.2 },
+        glm::vec3 { -1.2, 5.2, 2.4 },
+    };
+    Triangle triangle_D65_1 { vectices_D65[0], vectices_D65[2], vectices_D65[1] };
+    Triangle triangle_D65_2 { vectices_D65[1], vectices_D65[2], vectices_D65[3] };
+    scene.addAreaLight(new AreaLight { triangle_D65_1, &illumt_D65, false }, new DiffuseMaterial { &constant_1 });
+    scene.addAreaLight(new AreaLight { triangle_D65_2, &illumt_D65, false }, new DiffuseMaterial { &constant_1 });
+
+    IlluminantSpectrum illumt_A { CIE_standard_illumt_A, 2400 };
+    std::array<glm::vec3, 4> vectices_A {
+        glm::vec3 { 6.0, 5.2, -0.2 },
+        glm::vec3 { 6.0, 5.2, 2.4 },
+        glm::vec3 { 1.2, 5.2, -0.2 },
+        glm::vec3 { 1.2, 5.2, 2.4 },
+    };
+    Triangle triangle_A_1 { vectices_A[0], vectices_A[1], vectices_A[2] };
+    Triangle triangle_A_2 { vectices_A[2], vectices_A[1], vectices_A[3] };
+    scene.addAreaLight(new AreaLight { triangle_A_1, &illumt_A, false }, new DiffuseMaterial { &constant_1 });
+    scene.addAreaLight(new AreaLight { triangle_A_2, &illumt_A, false }, new DiffuseMaterial { &constant_1 });
 
     Plane ground {
         { 0, 0, 0 },
         { 0, 1, 0 },
-        100
+        100,
     };
-    scene.addShape(ground, new GroundMaterial { { 1, 1, 1 } });
+    scene.addShape(ground, new GroundMaterial { &constant_1 });
 
-    // Image env_image { "hdris/HdrOutdoorSnowMountainsEveningClear001_HDR_4K.exr" };
-    // Image env_image { "hdris/qwantani_night_puresky_4k.exr" };
-    Image env_image { "hdris/kloppenheim_07_puresky_4k.exr" };
-    scene.addInfiniteLight(new ImageInfiniteLight { &env_image });
+    Plane wall {
+        { 0, 0, 4 },
+        { 0, 0, -1 },
+        100,
+    };
+    scene.addShape(wall, new DiffuseMaterial { &constant_1 });
+
+    Plane separate {
+        { 0, 0, 0 },
+        { 1, 0, 0 },
+        100,
+    };
+    scene.addShape(separate, new DiffuseMaterial { &constant_1 });
 
     scene.build();
 
+    SimplePathTracingRenderer simple_path_tracing_renderer { camera, scene };
     PathTracingRenderer path_tracing_renderer { camera, scene };
     Previewer previewer(path_tracing_renderer);
     if (previewer.preview()) {
-        path_tracing_renderer.render(32, "PT_MIS_TEST.exr");
+        path_tracing_renderer.render(16, "SPECTRAL_TEST_16.exr", ColorSpace_sRGB);
+        simple_path_tracing_renderer.render(16, "SPECTRAL_TEST_SIMPLE_16.exr", ColorSpace_sRGB);
+        path_tracing_renderer.render(64, "SPECTRAL_TEST_64.exr", ColorSpace_sRGB);
+        simple_path_tracing_renderer.render(64, "SPECTRAL_TEST_SIMPLE_64.exr", ColorSpace_sRGB);
     }
 
     return 0;

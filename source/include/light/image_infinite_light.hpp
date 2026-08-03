@@ -10,10 +10,28 @@ public:
     bool skipMISCompensation() const override { return skip_mis_compensation; }
 
     float Phi(float scene_radius) const override { return precompute_phi * scene_radius * scene_radius; }
-    std::optional<LightSample> sampleLight(const glm::vec3 &surface_point, float scene_radius, const RNG &rng, bool allow_mis_compensation) const override;
 
-    glm::vec3 getRadiance(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal) const override;
-    float getPDF(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal, bool allow_mis_compensation) const override;
+    std::optional<LightSample> sampleLight(
+        const glm::vec3 &surface_point,
+        float scene_radius,
+        const RNG &rng,
+        const WavelengthSamples &wavelength,
+        bool allow_mis_compensation
+    ) const override;
+
+    SpectrumSamples getRadiance(
+        const glm::vec3 &surface_point,
+        const glm::vec3 &light_point,
+        const glm::vec3 &normal,
+        const WavelengthSamples &wavelength
+    ) const override;
+
+    float getPDF(
+        const glm::vec3 &surface_point,
+        const glm::vec3 &light_point,
+        const glm::vec3 &normal,
+        bool allow_mis_compensation
+    ) const override;
 private:
     glm::vec2 imagePointFromDirection(const glm::vec3 &direction) const;
     glm::vec3 directionFromImagePoint(const glm::vec2 &image_point) const;

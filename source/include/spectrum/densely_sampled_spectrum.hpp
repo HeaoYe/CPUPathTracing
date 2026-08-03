@@ -3,8 +3,16 @@
 #include "spectrum.hpp"
 #include <vector>
 #include <cmath>
+#include <filesystem>
+#include <string>
 
 class DenselySampledSpectrum : public Spectrum {
+public:
+    static DenselySampledSpectrum LoadCSV(
+        const std::filesystem::path &filename,
+        const std::string &header_name_lambda,
+        const std::string &header_name_value
+    );
 public:
     explicit DenselySampledSpectrum(
         const Spectrum &spectrum,

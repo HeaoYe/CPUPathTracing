@@ -19,6 +19,8 @@ public:
 
     explicit XYZ(const Spectrum &spectrum);
 
+    explicit XYZ(const SpectrumSamples &spectrum_samples, const WavelengthSamples &wavelength);
+
     XYZ operator+(const XYZ &rhs) const { return XYZ { data + rhs.data }; }
     XYZ operator-(const XYZ &rhs) const { return XYZ { data - rhs.data }; }
     XYZ operator*(float rhs) const { return XYZ { data * rhs }; }

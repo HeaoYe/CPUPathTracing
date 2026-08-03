@@ -111,7 +111,7 @@ bool Previewer::preview() {
         renderFrame();
         auto duration = std::chrono::high_resolution_clock::now() - start;
 
-        auto buffer = film.generateRGBABuffer();
+        auto buffer = film.generateRGBABuffer(ColorSpace_sRGB);
         texture->update(buffer.data());
 
         window->clear();
@@ -141,7 +141,7 @@ void Previewer::renderFrame() {
 
     thread_pool.parallelFor(film.getWidth(), film.getHeight(), [&](size_t x, size_t y) {
         for (size_t i = current_spp; i < current_spp + render_spp; i ++) {
-            film.addSample(x, y, renderer->renderPixel({ x, y, i }));
+            film.addSample(x, y, renderer->renderPixel({ x, y, i }, ColorSpace_sRGB));
         }
     });
     thread_pool.wait();

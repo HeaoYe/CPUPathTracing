@@ -1,25 +1,25 @@
 #include "renderer/path_tracing_renderer.hpp"
 #include "util/frame.hpp"
-#include "util/rng.hpp"
 
 float PowerHeuristic(float pdf_j, float pdf_k) {
     return pdf_j * pdf_j / (pdf_j * pdf_j + pdf_k * pdf_k);
 }
 
-glm::vec3 PathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
+PixelSample PathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord, const ColorSpace *target_color_space) {
     thread_local RNG rng {};
     rng.setState(
         pixel_coord.x + pixel_coord.y * camera.getFilm().getWidth(),
         (pixel_coord.x + 1) * (pixel_coord.y + 1) * pixel_coord.z
     );
 
+    WavelengthSamples wavelength = ImportanceSampleWavelength(rng.uniform());
     auto ray = camera.generateRay(pixel_coord, { rng.uniform(), rng.uniform() });
     size_t depth = 0;
-    glm::vec3 beta = { 1, 1, 1 };
-    glm::vec3 L = { 0, 0, 0 };
+    SpectrumSamples beta { 1 };
+    SpectrumSamples L {};
     bool last_is_specular = true;
     float last_bsdf_pdf = 0;
-    float eta_scale = 1.f;
+    SpectrumSamples eta_scale { 1 };
     bool allow_mis_compensation = true;
     const LightSampler &light_sampler = scene.getLightSampler(allow_mis_compensation);
 
@@ -35,12 +35,12 @@ glm::vec3 PathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
                     float light_pdf = hit_info->material->area_light->getPDF(ray.origin, hit_info->hit_point, hit_info->normal, allow_mis_compensation);
                     weight_bsdf = PowerHeuristic(last_bsdf_pdf, light_source_prob * light_pdf);
                 }
-                L += weight_bsdf * beta * hit_info->material->area_light->getRadiance(ray.origin, hit_info->hit_point, hit_info->normal);
+                L += weight_bsdf * beta * hit_info->material->area_light->getRadiance(ray.origin, hit_info->hit_point, hit_info->normal, wavelength);
             }
 
             if (depth > 3) {
-                glm::vec3 beta_q = beta * eta_scale;
-                float q = glm::max(beta_q.r, glm::max(beta_q.g, beta_q.b));
+                auto beta_q = beta * eta_scale;
+                float q = beta.max();
                 q = glm::min(q, 0.9f);
                 if (q < 1) {
                     if (rng.uniform() > q) {
@@ -63,18 +63,18 @@ glm::vec3 PathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
                 if (!last_is_specular) {
                     auto light_source_sample = light_sampler.sample(rng.uniform());
                     if (light_source_sample.has_value()) {
-                        auto light_sample = light_source_sample->light->sampleLight(hit_info->hit_point, scene.getRadius(), rng, allow_mis_compensation);
+                        auto light_sample = light_source_sample->light->sampleLight(hit_info->hit_point, scene.getRadius(), rng, wavelength, allow_mis_compensation);
                         if (light_sample.has_value() && (!scene.intersect({ hit_info->hit_point, light_sample->light_point - hit_info->hit_point }, 1e-5, 1.f - 1e-5))) {
                             glm::vec3 light_direction_local = frame.localFromWorld(light_sample->light_direction);
-                            float bsdf_pdf = hit_info->material->PDF(hit_info->hit_point, light_direction_local, view_direction);
+                            float bsdf_pdf = hit_info->material->PDF(hit_info->hit_point, light_direction_local, view_direction, wavelength);
                             float weight_light = PowerHeuristic(light_sample->pdf * light_source_sample->prob, bsdf_pdf);
-                            L += weight_light * beta * hit_info->material->BSDF(hit_info->hit_point, light_direction_local, view_direction)
+                            L += weight_light * beta * hit_info->material->BSDF(hit_info->hit_point, light_direction_local, view_direction, wavelength)
                                 * glm::abs(light_direction_local.y) * light_sample->Le / (light_sample->pdf * light_source_sample->prob);
                         }
                     }
                 }
 
-                auto bsdf_sample = hit_info->material->sampleBSDF(hit_info->hit_point, view_direction, rng);
+                auto bsdf_sample = hit_info->material->sampleBSDF(hit_info->hit_point, view_direction, rng, wavelength);
                 if (!bsdf_sample.has_value()) {
                     break;
                 }
@@ -93,19 +93,19 @@ glm::vec3 PathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
             glm::vec3 light_point = ray.origin + scene.getRadius() * 2 * light_direction;
             if (last_is_specular) {
                 for (const auto *infinite_light : scene.getInfiniteLights()) {
-                    L += beta * infinite_light->getRadiance(ray.origin, light_point, -light_direction);
+                    L += beta * infinite_light->getRadiance(ray.origin, light_point, -light_direction, wavelength);
                 }
             } else {
                 for (const auto *infinite_light : scene.getInfiniteLights()) {
                     float light_source_prob = light_sampler.getProb(infinite_light);
                     float light_pdf = infinite_light->getPDF(ray.origin, light_point, -light_direction, allow_mis_compensation);
                     float weight_bsdf = PowerHeuristic(last_bsdf_pdf, light_source_prob * light_pdf);
-                    L += weight_bsdf * beta * infinite_light->getRadiance(ray.origin, light_point, -light_direction);
+                    L += weight_bsdf * beta * infinite_light->getRadiance(ray.origin, light_point, -light_direction, wavelength);
                 }
             }
             break;
         }
     }
 
-    return L;
+    return { L, wavelength };
 }
