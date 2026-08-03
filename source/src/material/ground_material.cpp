@@ -14,7 +14,7 @@ std::optional<BSDFSample> GroundMaterial::sampleBSDF(const glm::vec3 &hit_point,
     ) {
         bsdf *= 0.1;
     }
-    return BSDFSample { bsdf, pdf, light_direction * glm::sign(view_direction.y) };
+    return BSDFSample { bsdf, SpectrumSamples(pdf), light_direction * glm::sign(view_direction.y) };
 }
 
 SpectrumSamples GroundMaterial::BSDF(const glm::vec3 &hit_point, const glm::vec3 &light_direction, const glm::vec3 &view_direction, const WavelengthSamples &wavelength) const {
@@ -31,9 +31,9 @@ SpectrumSamples GroundMaterial::BSDF(const glm::vec3 &hit_point, const glm::vec3
     return bsdf;
 }
 
-float GroundMaterial::PDF(const glm::vec3 &hit_point, const glm::vec3 &light_direction, const glm::vec3 &view_direction, const WavelengthSamples &wavelength) const {
+SpectrumSamples GroundMaterial::PDF(const glm::vec3 &hit_point, const glm::vec3 &light_direction, const glm::vec3 &view_direction, const WavelengthSamples &wavelength) const {
     if (light_direction.y * view_direction.y <= 0) {
-        return 0;
+        return {};
     }
-    return CosineSampleHemispherePDF(light_direction);
+    return SpectrumSamples(CosineSampleHemispherePDF(light_direction));
 }

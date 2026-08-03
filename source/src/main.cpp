@@ -141,10 +141,10 @@ int main() {
     PathTracingRenderer path_tracing_renderer { camera, scene };
     Previewer previewer(path_tracing_renderer);
     if (previewer.preview()) {
-        path_tracing_renderer.render(16, "SPECTRAL_TEST_16.exr", ColorSpace_sRGB);
-        simple_path_tracing_renderer.render(16, "SPECTRAL_TEST_SIMPLE_16.exr", ColorSpace_sRGB);
-        path_tracing_renderer.render(64, "SPECTRAL_TEST_64.exr", ColorSpace_sRGB);
-        simple_path_tracing_renderer.render(64, "SPECTRAL_TEST_SIMPLE_64.exr", ColorSpace_sRGB);
+        path_tracing_renderer.render(16, "SPECTRAL_MIS_TEST_16.exr", ColorSpace_sRGB);
+        simple_path_tracing_renderer.render(16, "SPECTRAL_MIS_TEST_SIMPLE_16.exr", ColorSpace_sRGB);
+        path_tracing_renderer.render(64, "SPECTRAL_MIS_TEST_64.exr", ColorSpace_sRGB);
+        simple_path_tracing_renderer.render(64, "SPECTRAL_MIS_TEST_SIMPLE_64.exr", ColorSpace_sRGB);
     }
 
     return 0;

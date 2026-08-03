@@ -11,8 +11,6 @@ constexpr size_t g_wavelength_sample_count = 4;
 struct WavelengthSamples {
     std::array<float, g_wavelength_sample_count> lambdas {};
     std::array<float, g_wavelength_sample_count> pdfs {};
-
-    mutable bool terminated { false };
 };
 
 inline WavelengthSamples UniformSampleWavelength(float u) {

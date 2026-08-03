@@ -167,9 +167,6 @@ public:
         SpectrumSamples result {};
         for (size_t i = 0; i < g_wavelength_sample_count; i ++) {
             result[i] = (*this)[wavelength.lambdas[i]];
-            if (wavelength.terminated) {
-                break;
-            }
         }
         return result;
     }

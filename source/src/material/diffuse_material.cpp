@@ -8,7 +8,7 @@ std::optional<BSDFSample> DiffuseMaterial::sampleBSDF(const glm::vec3 &hit_point
     glm::vec3 light_direction = CosineSampleHemisphere({ rng.uniform(), rng.uniform() });
     float pdf = CosineSampleHemispherePDF(light_direction);
     auto bsdf = albedo->sample(wavelength) / PI;
-    return BSDFSample { bsdf, pdf, light_direction * glm::sign(view_direction.y) };
+    return BSDFSample { bsdf, SpectrumSamples(pdf), light_direction * glm::sign(view_direction.y) };
 }
 
 SpectrumSamples DiffuseMaterial::BSDF(const glm::vec3 &hit_point, const glm::vec3 &light_direction, const glm::vec3 &view_direction, const WavelengthSamples &wavelength) const {
@@ -18,9 +18,9 @@ SpectrumSamples DiffuseMaterial::BSDF(const glm::vec3 &hit_point, const glm::vec
     return albedo->sample(wavelength) / PI;
 }
 
-float DiffuseMaterial::PDF(const glm::vec3 &hit_point, const glm::vec3 &light_direction, const glm::vec3 &view_direction, const WavelengthSamples &wavelength) const {
+SpectrumSamples DiffuseMaterial::PDF(const glm::vec3 &hit_point, const glm::vec3 &light_direction, const glm::vec3 &view_direction, const WavelengthSamples &wavelength) const {
     if (light_direction.y * view_direction.y <= 0) {
-        return 0;
+        return {};
     }
-    return CosineSampleHemispherePDF(light_direction);
+    return SpectrumSamples(CosineSampleHemispherePDF(light_direction));
 }

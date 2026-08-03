@@ -9,7 +9,7 @@ struct LightSample {
     glm::vec3 light_point {};
     glm::vec3 light_direction {};
     SpectrumSamples Le {};
-    float pdf {};
+    SpectrumSamples pdf {};
 };
 
 class Light {
@@ -33,10 +33,11 @@ public:
         const WavelengthSamples &wavelength
     ) const = 0;
 
-    virtual float getPDF(
+    virtual SpectrumSamples getPDF(
         const glm::vec3 &surface_point,
         const glm::vec3 &light_point,
         const glm::vec3 &normal,
+        const WavelengthSamples &wavelength,
         bool allow_mis_compensation
     ) const = 0;
 };

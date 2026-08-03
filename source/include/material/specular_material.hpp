@@ -18,14 +18,14 @@ public:
         const glm::vec3 &light_direction,
         const glm::vec3 &view_direction,
         const WavelengthSamples &wavelength
-    ) const override;
+    ) const override { return {}; }
 
-    float PDF(
+    SpectrumSamples PDF(
         const glm::vec3 &hit_point,
         const glm::vec3 &light_direction,
         const glm::vec3 &view_direction,
         const WavelengthSamples &wavelength
-    ) const override;
+    ) const override { return {}; }
 
     bool isDeltaDistribution() const override { return true; }
 private:

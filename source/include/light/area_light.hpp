@@ -26,10 +26,11 @@ public:
         const WavelengthSamples &wavelength
     ) const override;
 
-    float getPDF(
+    SpectrumSamples getPDF(
         const glm::vec3 &surface_point,
         const glm::vec3 &light_point,
         const glm::vec3 &normal,
+        const WavelengthSamples &wavelength,
         bool allow_mis_compensation
     ) const override;
 

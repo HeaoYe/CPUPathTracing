@@ -22,9 +22,6 @@ XYZ::XYZ(const SpectrumSamples &spectrum_samples, const WavelengthSamples &wavel
         X() += spectrum_samples[i] * X_color_matching[wavelength.lambdas[i]] / wavelength.pdfs[i];
         Y() += spectrum_samples[i] * Y_color_matching[wavelength.lambdas[i]] / wavelength.pdfs[i];
         Z() += spectrum_samples[i] * Z_color_matching[wavelength.lambdas[i]] / wavelength.pdfs[i];
-        if (wavelength.terminated) {
-            return;
-        }
     }
     data /= g_wavelength_sample_count;
 }

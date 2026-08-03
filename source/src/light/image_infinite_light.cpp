@@ -53,7 +53,7 @@ std::optional<LightSample> ImageInfiniteLight::sampleLight(const glm::vec3 &surf
         light_direction,
         // image->getPixel(image_point),
         {},  // INCOMPLETED
-        result.prob * image->getWidth() * image->getHeight() / (2 * PI * PI * glm::sqrt(1 - light_direction.y * light_direction.y) * w * h)
+        SpectrumSamples(result.prob * image->getWidth() * image->getHeight() / (2 * PI * PI * glm::sqrt(1 - light_direction.y * light_direction.y) * w * h))
     };
 }
 
@@ -66,7 +66,7 @@ SpectrumSamples ImageInfiniteLight::getRadiance(const glm::vec3 &surface_point, 
     return {};  // INCOMPLETED
 }
 
-float ImageInfiniteLight::getPDF(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal, bool allow_mis_compensation) const {
+SpectrumSamples ImageInfiniteLight::getPDF(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal, const WavelengthSamples &wavelength, bool allow_mis_compensation) const {
     glm::vec3 light_direction = glm::normalize(light_point - surface_point);
     if (glm::abs(light_direction.y) == 1) {
         return {};
@@ -79,7 +79,7 @@ float ImageInfiniteLight::getPDF(const glm::vec3 &surface_point, const glm::vec3
 
     float gird_prob = (allow_mis_compensation && (!skip_mis_compensation) ? alias_table_compensated : alias_table).getProbs()[gird_idx.y * gird_count.x + gird_idx.x];
 
-    return gird_prob * image->getWidth() * image->getHeight() / (2 * PI * PI * glm::sqrt(1 - light_direction.y * light_direction.y) * w * h);
+    return SpectrumSamples(gird_prob * image->getWidth() * image->getHeight() / (2 * PI * PI * glm::sqrt(1 - light_direction.y * light_direction.y) * w * h));
 }
 
 glm::vec2 ImageInfiniteLight::imagePointFromDirection(const glm::vec3 &direction) const {

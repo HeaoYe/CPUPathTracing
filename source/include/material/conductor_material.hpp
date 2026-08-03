@@ -21,7 +21,7 @@ public:
         const WavelengthSamples &wavelength
     ) const override;
 
-    float PDF(
+    SpectrumSamples PDF(
         const glm::vec3 &hit_point,
         const glm::vec3 &light_direction,
         const glm::vec3 &view_direction,

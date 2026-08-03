@@ -7,7 +7,7 @@
 
 struct BSDFSample {
     SpectrumSamples bsdf {};
-    float pdf {};
+    SpectrumSamples pdf {};
     glm::vec3 light_direction {};
     SpectrumSamples eta_scale { 1.f };
 };
@@ -28,7 +28,7 @@ public:
         const WavelengthSamples &wavelength
     ) const = 0;
 
-    virtual float PDF(
+    virtual SpectrumSamples PDF(
         const glm::vec3 &hit_point,
         const glm::vec3 &light_direction,
         const glm::vec3 &view_direction,

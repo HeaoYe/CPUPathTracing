@@ -26,13 +26,13 @@ std::optional<BSDFSample> ConductorMaterial::sampleBSDF(const glm::vec3 &hit_poi
     auto fr = Fresnel(eta->sample(wavelength), k->sample(wavelength), glm::abs(glm::dot(view_direction, microfacet_normal)));
     glm::vec3 light_direction = -view_direction + 2.f * glm::dot(microfacet_normal, view_direction) * microfacet_normal;
     if (microfacet_theory.isDeltaDistribution()) {
-        return BSDFSample { fr / glm::abs(light_direction.y), 1, light_direction };
+        return BSDFSample { fr / glm::abs(light_direction.y), SpectrumSamples(1), light_direction };
     }
     auto brdf = fr * microfacet_theory.normalDistribution(microfacet_normal)
         * microfacet_theory.heightCorrelatedMaskingShadowing(light_direction, view_direction, microfacet_normal)
         / glm::abs(4.f * light_direction.y * view_direction.y);
     float pdf = microfacet_theory.visibleNormalDistribution(view_direction, microfacet_normal) / glm::abs(4.f * glm::dot(view_direction, microfacet_normal));
-    return BSDFSample { brdf, pdf, light_direction };
+    return BSDFSample { brdf, SpectrumSamples(pdf), light_direction };
 }
 
 SpectrumSamples ConductorMaterial::BSDF(const glm::vec3 &hit_point, const glm::vec3 &light_direction, const glm::vec3 &view_direction, const WavelengthSamples &wavelength) const {
@@ -55,18 +55,18 @@ SpectrumSamples ConductorMaterial::BSDF(const glm::vec3 &hit_point, const glm::v
     return brdf;
 }
 
-float ConductorMaterial::PDF(const glm::vec3 &hit_point, const glm::vec3 &light_direction, const glm::vec3 &view_direction, const WavelengthSamples &wavelength) const {
+SpectrumSamples ConductorMaterial::PDF(const glm::vec3 &hit_point, const glm::vec3 &light_direction, const glm::vec3 &view_direction, const WavelengthSamples &wavelength) const {
     if (microfacet_theory.isDeltaDistribution()) {
-        return 0;
+        return {};
     }
     float lv = light_direction.y * view_direction.y;
     if (lv <= 0) {
-        return 0;
+        return {};
     }
 
     glm::vec3 microfacet_normal = glm::normalize(light_direction + view_direction);
     if (microfacet_normal.y < 0) {
         microfacet_normal = -microfacet_normal;
     }
-    return microfacet_theory.visibleNormalDistribution(view_direction, microfacet_normal) / glm::abs(4.f * glm::dot(view_direction, microfacet_normal));
+    return SpectrumSamples(microfacet_theory.visibleNormalDistribution(view_direction, microfacet_normal) / glm::abs(4.f * glm::dot(view_direction, microfacet_normal)));
 }
