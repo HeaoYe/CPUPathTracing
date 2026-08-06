@@ -38,7 +38,7 @@ std::optional<ShapeSample> Triangle::sampleShape(const RNG &rng) const {
     }
     return ShapeSample {
         u * p0 + v * p1 + (1.f - u - v) * p2,
-        u * n0 + v * n1 + (1.f - u - v) * n2,
+        glm::normalize(u * n0 + v * n1 + (1.f - u - v) * n2),
         1.f / getArea()
     };
 }

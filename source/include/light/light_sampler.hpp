@@ -6,8 +6,8 @@
 #include <map>
 
 struct LightSourceSample {
-    const Light *light;
-    float prob;
+    const Light *light {};
+    SpectrumSamples prob {};
 };
 
 class LightSampler {
@@ -20,13 +20,14 @@ public:
 
     void build(float scene_radius);
 
-    std::optional<LightSourceSample> sample(float u) const;
-    float getProb(const Light *light) const {
+    std::optional<LightSourceSample> sample(float u, const WavelengthSamples &wavelength) const;
+
+    SpectrumSamples getProb(const Light *light, const WavelengthSamples &wavelength) const {
         auto result = light2prob.find(light);
         if (result == light2prob.end()) {
-            return 0;
+            return {};
         }
-        return result->second;
+        return SpectrumSamples(result->second);
     }
 private:
     std::vector<const Light *> lights;

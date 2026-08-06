@@ -111,7 +111,7 @@ bool Previewer::preview() {
         renderFrame();
         auto duration = std::chrono::high_resolution_clock::now() - start;
 
-        auto buffer = film.generateRGBABuffer();
+        auto buffer = film.generateRGBABuffer(ColorSpace_sRGB);
         texture->update(buffer.data());
 
         window->clear();
@@ -141,7 +141,7 @@ void Previewer::renderFrame() {
 
     thread_pool.parallelFor(film.getWidth(), film.getHeight(), [&](size_t x, size_t y) {
         for (size_t i = current_spp; i < current_spp + render_spp; i ++) {
-            film.addSample(x, y, renderer->renderPixel({ x, y, i }));
+            film.addSample(x, y, renderer->renderPixel({ x, y, i }, ColorSpace_sRGB));
         }
     });
     thread_pool.wait();
@@ -165,6 +165,10 @@ void Previewer::setResolution(float scale) {
 }
 
 void Previewer::adjustResolution(float dt) {
+    float render_spp = render_mode_idx == 0 ? 4 : 1;
+    if (current_spp / render_spp > fps * 3) {
+        return;
+    }
     float expected_dt = 1.f / fps;
     if (glm::abs(expected_dt - dt) / expected_dt > 0.4f) {
         float new_scale = scale * (1.f + 0.1f * (glm::sqrt(expected_dt / dt) - 1.f));

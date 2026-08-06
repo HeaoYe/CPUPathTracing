@@ -2,14 +2,15 @@
 #include "spectrum/illuminant.hpp"
 
 ColorSpace::ColorSpace(xy r, xy g, xy b, xy w, TransferFunction transfer_function)
-    : transfer_function(std::move(transfer_function)){
+    : r(r), g(g), b(b), w(w), transfer_function(std::move(transfer_function)){
     calculateMatrix(r, g, b, XYZ(w, 1));
 }
 
 ColorSpace::ColorSpace(xy r, xy g, xy b, const Spectrum &illumt_white, TransferFunction transfer_function)
-    : transfer_function(std::move(transfer_function)){
+    : r(r), g(g), b(b), transfer_function(std::move(transfer_function)){
     XYZ W { illumt_white };
-    W /= W.Y;
+    W /= W.Y();
+    w = xy(W);
     calculateMatrix(r, g, b, W);
 }
 
@@ -36,7 +37,7 @@ void InitColorSpace() {
                 if (L <= 0.0031308f) {
                     return 12.92f * L;
                 }
-                return 1.005f * glm::pow(L, 1.f/2.4f) - 0.055f;
+                return 1.055f * glm::pow(L, 1.f/2.4f) - 0.055f;
             },
             [](float V) {
                 if (V <= 0.04045) {

@@ -11,13 +11,15 @@ class XYZ {
 public:
     XYZ() = default;
 
-    XYZ(float X, float Y, float Z) : X(X), Y(Y), Z(Z) {}
+    XYZ(float X, float Y, float Z) : data(X, Y, Z) {}
 
     explicit XYZ(const glm::vec3 &data) : data(data) {}
 
     explicit XYZ(const class xy &xy, float Y = 1);
 
     explicit XYZ(const Spectrum &spectrum);
+
+    explicit XYZ(const SpectrumSamples &spectrum_samples, const WavelengthSamples &wavelength);
 
     XYZ operator+(const XYZ &rhs) const { return XYZ { data + rhs.data }; }
     XYZ operator-(const XYZ &rhs) const { return XYZ { data - rhs.data }; }
@@ -27,15 +29,15 @@ public:
     XYZ &operator-=(const XYZ &rhs) { data -= rhs.data; return *this; }
     XYZ &operator*=(float rhs) { data *= rhs; return *this; }
     XYZ &operator/=(float rhs) { data /= rhs; return *this; }
+
+    float X() const { return data.x; }
+    float Y() const { return data.y; }
+    float Z() const { return data.z; }
+    float &X() { return data.x; }
+    float &Y() { return data.y; }
+    float &Z() { return data.z; }
 public:
-    union {
-        struct {
-            float X {};
-            float Y {};
-            float Z {};
-        };
-        glm::vec3 data;
-    };
+    glm::vec3 data {};
 };
 
 class xy {

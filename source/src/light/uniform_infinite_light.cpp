@@ -2,10 +2,10 @@
 #include "sample/spherical.hpp"
 
 float UniformInfiniteLight::Phi(float scene_radius) const {
-    return 4 * PI * PI * scene_radius * scene_radius * glm::max(Le.r, glm::max(Le.g, Le.b));
+    return 4 * PI * PI * scene_radius * scene_radius * Le->max();
 }
 
-std::optional<LightSample> UniformInfiniteLight::sampleLight(const glm::vec3 &surface_point, float scene_radius, const RNG &rng, bool allow_mis_compensation) const {
+std::optional<LightSample> UniformInfiniteLight::sampleLight(const glm::vec3 &surface_point, float scene_radius, const RNG &rng, const WavelengthSamples &wavelength, bool allow_mis_compensation) const {
     if (allow_mis_compensation) {
         return {};
     }
@@ -13,18 +13,18 @@ std::optional<LightSample> UniformInfiniteLight::sampleLight(const glm::vec3 &su
     return LightSample {
         surface_point + 2.f * scene_radius * light_direction,
         light_direction,
-        Le,
-        1.f / (4.f * PI)
+        Le->sample(wavelength),
+        SpectrumSamples(1.f / (4.f * PI))
     };
 }
 
-glm::vec3 UniformInfiniteLight::getRadiance(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal) const {
-    return Le;
+SpectrumSamples UniformInfiniteLight::getRadiance(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal, const WavelengthSamples &wavelength) const {
+    return Le->sample(wavelength);
 }
 
-float UniformInfiniteLight::getPDF(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal, bool allow_mis_compensation) const {
+SpectrumSamples UniformInfiniteLight::getPDF(const glm::vec3 &surface_point, const glm::vec3 &light_point, const glm::vec3 &normal, const WavelengthSamples &wavelength, bool allow_mis_compensation) const {
     if (allow_mis_compensation) {
-        return 0;
+        return {};
     }
-    return 1.f / (4.f * PI);
+    return SpectrumSamples(1.f / (4.f * PI));
 }

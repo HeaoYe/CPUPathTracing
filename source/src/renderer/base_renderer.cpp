@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-void BaseRenderer::render(size_t spp, const std::filesystem::path &filename) {
+void BaseRenderer::render(size_t spp, const std::filesystem::path &filename, const ColorSpace *target_color_space) {
     PROFILE("Render " + std::to_string(spp) + "spp " + filename.string());
 
     size_t current_spp = 0, increase = 1;
@@ -15,7 +15,7 @@ void BaseRenderer::render(size_t spp, const std::filesystem::path &filename) {
     while (current_spp < spp) {
         thread_pool.parallelFor(film.getWidth(), film.getHeight(), [&](size_t x, size_t y) {
             for (int i = 0; i < increase; i ++) {
-                film.addSample(x, y, renderPixel({ x, y, current_spp + i }));
+                film.addSample(x, y, renderPixel({ x, y, current_spp + i }, target_color_space));
             }
             progress.update(increase);
         });
@@ -24,7 +24,7 @@ void BaseRenderer::render(size_t spp, const std::filesystem::path &filename) {
         current_spp += increase;
         increase = std::min<size_t>(current_spp, 32);
 
-        film.save(filename);
+        film.save(filename, target_color_space);
         std::cout << current_spp << "spp has been saved to " << filename << std::endl;
     }
 }

@@ -1,23 +1,20 @@
 #include "renderer/debug_renderer.hpp"
-#include "util/rgb.hpp"
 
-glm::vec3 BoundsTestCountRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
+PixelSample BoundsTestCountRenderer::renderPixel(const glm::ivec3 &pixel_coord, const ColorSpace *target_color_space) {
     #ifdef WITH_DEBUG_INFO
     auto ray = camera.generateRay(pixel_coord);
     scene.intersect(ray);
-    return RGB::GenerateHeatmapRGB(ray.bounds_test_count / 150.f);
-    return {};
+    return { EncodedRGB::GenerateHeatmapRGB(ray.bounds_test_count / 150.f), target_color_space };
     #else
     return {};
     #endif
 }
 
-glm::vec3 TriangleTestCountRenderer::renderPixel(const glm::ivec3 &pixel_coord) {
+PixelSample TriangleTestCountRenderer::renderPixel(const glm::ivec3 &pixel_coord, const ColorSpace *target_color_space) {
     #ifdef WITH_DEBUG_INFO
     auto ray = camera.generateRay(pixel_coord);
     scene.intersect(ray);
-    return RGB::GenerateHeatmapRGB(ray.triangle_test_count / 7.f);
-    return {};
+    return { EncodedRGB::GenerateHeatmapRGB(ray.triangle_test_count / 7.f), target_color_space };
     #else
     return {};
     #endif

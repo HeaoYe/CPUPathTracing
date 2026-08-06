@@ -3,24 +3,33 @@
 XYZ::XYZ(const class xy &xy, float Y) {
     float z = 1 - xy.x - xy.y;
     float k = Y / xy.y;
-    X = xy.x * k;
-    this->Y = Y;
-    Z = z * k;
+    X() = xy.x * k;
+    this->Y() = Y;
+    Z() = z * k;
 }
 
 XYZ::XYZ(const Spectrum &spectrum) : data(0) {
     for (int lambda = 360; lambda <= 830; lambda ++) {
         float value = spectrum[lambda];
-        X += value * X_color_matching[lambda];
-        Y += value * Y_color_matching[lambda];
-        Z += value * Z_color_matching[lambda];
+        X() += value * X_color_matching[lambda];
+        Y() += value * Y_color_matching[lambda];
+        Z() += value * Z_color_matching[lambda];
     }
 }
 
+XYZ::XYZ(const SpectrumSamples &spectrum_samples, const WavelengthSamples &wavelength) : data() {
+    for (size_t i = 0; i < g_wavelength_sample_count; i ++) {
+        X() += spectrum_samples[i] * X_color_matching[wavelength.lambdas[i]] / wavelength.pdfs[i];
+        Y() += spectrum_samples[i] * Y_color_matching[wavelength.lambdas[i]] / wavelength.pdfs[i];
+        Z() += spectrum_samples[i] * Z_color_matching[wavelength.lambdas[i]] / wavelength.pdfs[i];
+    }
+    data /= g_wavelength_sample_count;
+}
+
 xy::xy(const XYZ &xyz) {
-    float t = xyz.X + xyz.Y + xyz.Z;
-    x = xyz.X / t;
-    y = xyz.Y / t;
+    float t = xyz.X() + xyz.Y() + xyz.Z();
+    x = xyz.X() / t;
+    y = xyz.Y() / t;
 }
 
 const std::vector<float> X_color_matching_data {

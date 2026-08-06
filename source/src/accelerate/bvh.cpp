@@ -43,7 +43,7 @@ void BVH::build(std::vector<Triangle> &&triangles) {
 
 void BVH::recursiveSplit(BVHTreeNode *node, BVHState &state) {
     state.total_node_count ++;
-    if (((node->end - node->start) == 1) || (node->depth > 32)) {
+    if (((node->end - node->start) <= 4) || (node->depth > 32)) {
         state.addLeafNode(node);
         return;
     }
@@ -100,6 +100,11 @@ void BVH::recursiveSplit(BVHTreeNode *node, BVHState &state) {
     }
 
     if (min_split_index == 0) {
+        state.addLeafNode(node);
+        return;
+    }
+
+    if (0.5 + min_cost / node->bounds.area() >= (node->end - node->start)) {
         state.addLeafNode(node);
         return;
     }
