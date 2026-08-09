@@ -312,46 +312,46 @@ cmake --build build -j 8
 - 三角形相交测试热力图
 
 ## 参考资料 References
-- [Physically Based Rendering: From Theory to Implementation, 4th Edition](https://pbr-book.org/4ed/contents)  
+- [Physically Based Rendering: From Theory to Implementation, 4th Edition](https://pbr-book.org/4ed/contents)
   Matt Pharr, Wenzel Jakob, Greg Humphreys, 2023.
 
-- [Robust Monte Carlo Methods for Light Transport Simulation](https://graphics.stanford.edu/papers/veach_thesis/)  
+- [Robust Monte Carlo Methods for Light Transport Simulation](https://graphics.stanford.edu/papers/veach_thesis/)
   Eric Veach, Ph.D. dissertation, Stanford University, 1997.
 
-- [On fast Construction of SAH-based Bounding Volume Hierarchies](https://publications.sci.utah.edu/publications/wald07/fastbuild.pdf)  
+- [On fast Construction of SAH-based Bounding Volume Hierarchies](https://publications.sci.utah.edu/publications/wald07/fastbuild.pdf)
   Ingo Wald, IEEE/Eurographics Symposium on Interactive Ray Tracing, 33–40, 2007.
 
-- [Microfacet Models for Refraction through Rough Surfaces](https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html)  
+- [Microfacet Models for Refraction through Rough Surfaces](https://www.cs.cornell.edu/~srm/publications/EGSR07-btdf.html)
   Bruce Walter, Stephen R. Marschner, Hongsong Li, Kenneth E. Torrance, Eurographics Symposium on Rendering (EGSR), 195–206, 2007.
 
-- [Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs](https://jcgt.org/published/0003/02/03/)  
+- [Understanding the Masking-Shadowing Function in Microfacet-Based BRDFs](https://jcgt.org/published/0003/02/03/)
   Eric Heitz, Journal of Computer Graphics Techniques (JCGT), 3(2), 48–107, 2014.
 
-- [Sampling the GGX Distribution of Visible Normals](https://jcgt.org/published/0007/04/01/)  
+- [Sampling the GGX Distribution of Visible Normals](https://jcgt.org/published/0007/04/01/)
   Eric Heitz, Journal of Computer Graphics Techniques (JCGT), 7(4), 1–13, 2018.
 
-- [A re-determination of the trichromatic coefficients of the spectral colours](https://doi.org/10.1088/1475-4878/30/4/301)  
+- [A re-determination of the trichromatic coefficients of the spectral colours](https://doi.org/10.1088/1475-4878/30/4/301)
   W. D. Wright, Transactions of the Optical Society, 30(4), 141–164, 1929.
 
-- [A re-determination of the mixture curves of the spectrum](https://doi.org/10.1088/1475-4878/31/4/303)  
+- [A re-determination of the mixture curves of the spectrum](https://doi.org/10.1088/1475-4878/31/4/303)
   W. D. Wright, Transactions of the Optical Society, 31(4), 201–218, 1930.
 
-- [The Colorimetric Properties of the Spectrum](https://doi.org/10.1098/rsta.1932.0005)  
+- [The Colorimetric Properties of the Spectrum](https://doi.org/10.1098/rsta.1932.0005)
   John Guild, Philosophical Transactions of the Royal Society A, 230, 149–187, 1932.
 
-- [How the CIE 1931 color-matching functions were derived from Wright-Guild data](https://doi.org/10.1002/%28SICI%291520-6378%28199702%2922%3A1%3C11%3A%3AAID-COL4%3E3.0.CO%3B2-7)  
+- [How the CIE 1931 color-matching functions were derived from Wright-Guild data](https://doi.org/10.1002/%28SICI%291520-6378%28199702%2922%3A1%3C11%3A%3AAID-COL4%3E3.0.CO%3B2-7)
   Hugh S. Fairman, Michael H. Brill, Henry Hemmendinger, Color Research & Application, 22(1), 11–23, 1997.
 
-- [A critical review of the development of the CIE1931 RGB color-matching functions](https://doi.org/10.1002/col.20020)  
+- [A critical review of the development of the CIE1931 RGB color-matching functions](https://doi.org/10.1002/col.20020)
   Arthur D. Broadbent, Color Research & Application, 29(4), 267–272, 2004.
 
-- [How the CIE 1931 RGB Color Matching Functions Were Developed from the Initial Color Matching Experiments](https://yuhaozhu.com/blog/cmf.html)  
+- [How the CIE 1931 RGB Color Matching Functions Were Developed from the Initial Color Matching Experiments](https://yuhaozhu.com/blog/cmf.html)
   Yuhao Zhu, blog article, 2020.
 
-- [Hero Wavelength Spectral Sampling](https://doi.org/10.1111/cgf.12419)  
+- [Hero Wavelength Spectral Sampling](https://doi.org/10.1111/cgf.12419)
   Alexander Wilkie, Sehera Nawaz, Marc Droske, Andrea Weidlich, Johannes Hanika, Computer Graphics Forum, 33(4), 123–131, 2014.
 
-- [A Low-Dimensional Function Space for Efficient Spectral Upsampling](https://rgl.epfl.ch/publications/Jakob2019Spectral)  
+- [A Low-Dimensional Function Space for Efficient Spectral Upsampling](https://rgl.epfl.ch/publications/Jakob2019Spectral)
   Wenzel Jakob, Johannes Hanika, Computer Graphics Forum (Proceedings of Eurographics), 38(2), 147–155, 2019.
 
 ## 许可证 License
