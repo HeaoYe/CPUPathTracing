@@ -51,16 +51,16 @@ PixelSample SimplePathTracingRenderer::renderPixel(const glm::ivec3 &pixel_coord
                 }
 
                 auto bsdf_sample = hit_info->material->sampleBSDF(hit_info->hit_point, view_direction, rng, wavelength);
+                if (!bsdf_sample.has_value()) {
+                    break;
+                }
                 if (!terminated) {
                     for (size_t i = 1; i < g_wavelength_sample_count; i ++) {
-                        if (bsdf_sample->pdf[i] == 0) {
+                        if (bsdf_sample->pdf[i - 1] != bsdf_sample->pdf[i]) {
                             terminated = true;
                             break;
                         }
                     }
-                }
-                if (!bsdf_sample.has_value()) {
-                    break;
                 }
                 beta *= bsdf_sample->bsdf * glm::abs(bsdf_sample->light_direction.y) / bsdf_sample->pdf[0];
                 light_direction = bsdf_sample->light_direction;
