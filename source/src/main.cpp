@@ -14,32 +14,22 @@
 #include "renderer/path_tracing_renderer.hpp"
 #include "renderer/simple_path_tracing_renderer.hpp"
 #include "renderer/previewer.hpp"
+#include "sample/spherical.hpp"
 
 #include "spectrum/constant_spectrum.hpp"
 #include "spectrum/piecewise_linear_spectrum.hpp"
 #include "spectrum/densely_sampled_spectrum.hpp"
+#include "spectrum/rgb_illuminant_spectrum.hpp"
 #include "spectrum/illuminant_spectrum.hpp"
 #include "spectrum/illuminant.hpp"
 #include "color/color_space.hpp"
-
-PiecewiseLinearSpectrum *FromRGB(uint32_t r, uint32_t g, uint32_t b) {
-    auto data = ColorSpace_sRGB->decode(EncodedRGB { r, g, b });
-    return new PiecewiseLinearSpectrum {
-        {
-            { 360, data.b() / 3.f },
-            { 400, data.b() },
-            { 525, data.g() },
-            { 650, data.r() },
-            { 830, data.r() / 3.f },
-        }
-    };
-}
+#include "color/color_lut.hpp"
 
 int main() {
     InitColorSpace();
 
     Film film { 192 * 10, 108 * 10 };
-    Camera camera { film, { 0, 4, -8 }, { 0, 2.1, 0.2 }, 48 };
+    Camera camera { film, { 0, 1.25, -10 }, { 0, 3.95, 2 }, 48 };
 
     Scene scene {};
 
@@ -55,7 +45,8 @@ int main() {
     ConductorMaterial copper { &copper_eta, &copper_k, 0.5, 0.42 };
     auto glass_eta = PiecewiseLinearSpectrum::LoadCSV(
         "spectrums/Zelmon-glass.csv", "wl", 1e3, "n");
-    DielectricMaterial glass { &glass_eta, FromRGB(210, 210, 184), 0.21, 0.08 };
+    auto glass_color = ColorLUT_sRGB->look(210, 210, 184);
+    DielectricMaterial glass { &glass_eta, &glass_color, 0.21, 0.08 };
 
     scene.addShape(buddha, &copper, { -5.0, 1.78, 1.7 }, { 4, 4, 4 });
     scene.addShape(buddha, &glass, { -2.1, 1.78, 1.7 }, { 4, 4, 4 });
@@ -90,29 +81,26 @@ int main() {
     scene.addShape(dragon, &metameric_B, { 2.4, 0.7, -1.65 }, { 2, 2, 2 }, { 0, 90, 0 });
     scene.addShape(dragon, &metameric_A, { 4.3, 0.7, -1.65 }, { 2, 2, 2 }, { 0, 90, 0 });
 
-    IlluminantSpectrum illumt_D65 { CIE_standard_illumt_D65, 2400 };
-    std::array<glm::vec3, 4> vectices_D65 {
-        glm::vec3 { -6.0, 5.2, -0.2 },
-        glm::vec3 { -6.0, 5.2, 2.4 },
-        glm::vec3 { -1.2, 5.2, -0.2 },
-        glm::vec3 { -1.2, 5.2, 2.4 },
-    };
-    Triangle triangle_D65_1 { vectices_D65[0], vectices_D65[2], vectices_D65[1] };
-    Triangle triangle_D65_2 { vectices_D65[1], vectices_D65[2], vectices_D65[3] };
-    scene.addAreaLight(new AreaLight { triangle_D65_1, &illumt_D65, false }, new DiffuseMaterial { &constant_1 });
-    scene.addAreaLight(new AreaLight { triangle_D65_2, &illumt_D65, false }, new DiffuseMaterial { &constant_1 });
+    constexpr size_t dragon_count = 1200;
 
-    IlluminantSpectrum illumt_A { CIE_standard_illumt_A, 2400 };
-    std::array<glm::vec3, 4> vectices_A {
-        glm::vec3 { 6.0, 5.2, -0.2 },
-        glm::vec3 { 6.0, 5.2, 2.4 },
-        glm::vec3 { 1.2, 5.2, -0.2 },
-        glm::vec3 { 1.2, 5.2, 2.4 },
-    };
-    Triangle triangle_A_1 { vectices_A[0], vectices_A[1], vectices_A[2] };
-    Triangle triangle_A_2 { vectices_A[2], vectices_A[1], vectices_A[3] };
-    scene.addAreaLight(new AreaLight { triangle_A_1, &illumt_A, false }, new DiffuseMaterial { &constant_1 });
-    scene.addAreaLight(new AreaLight { triangle_A_2, &illumt_A, false }, new DiffuseMaterial { &constant_1 });
+    std::vector<SigmoidPolynomialSpectrum> reflectance_spctral;
+    reflectance_spctral.reserve(dragon_count);
+    RNG rng {};
+    rng.setState(dragon_count, 0);
+
+    for (size_t i = 0; i < dragon_count; i ++) {
+        reflectance_spctral.push_back(ColorLUT_sRGB->look(LinearRGB(rng.uniform(), rng.uniform(), rng.uniform())));
+
+        auto disk = UniformSampleUnitDisk({ rng.uniform(), rng.uniform() }) * 12.f;
+
+        scene.addShape(
+            dragon,
+            new DiffuseMaterial { &reflectance_spctral.back() },
+            { disk.x, glm::abs(disk.y), 4 },
+            { 1, 1, 1 },
+            { rng.uniform() * 360, rng.uniform() * 360, rng.uniform() * 360 }
+        );
+    }
 
     Plane ground {
         { 0, 0, 0 },
@@ -121,30 +109,18 @@ int main() {
     };
     scene.addShape(ground, new GroundMaterial { &constant_1 });
 
-    Plane wall {
-        { 0, 0, 4 },
-        { 0, 0, -1 },
-        100,
-    };
-    scene.addShape(wall, new DiffuseMaterial { &constant_1 });
-
-    Plane separate {
-        { 0, 0, 0 },
-        { 1, 0, 0 },
-        100,
-    };
-    scene.addShape(separate, new DiffuseMaterial { &constant_1 });
+    scene.addInfiniteLight(new ImageInfiniteLight {
+        { "hdris/kloppenheim_07_puresky_4k.exr" }, 80
+    });
+    // RGBIlluminantSpectrum illumt { ColorLUT_sRGB, LinearRGB { 1, 0.9, 0.8} };
+    // scene.addInfiniteLight(new UniformInfiniteLight { &illumt });
 
     scene.build();
 
-    SimplePathTracingRenderer simple_path_tracing_renderer { camera, scene };
     PathTracingRenderer path_tracing_renderer { camera, scene };
     Previewer previewer(path_tracing_renderer);
     if (previewer.preview()) {
-        path_tracing_renderer.render(16, "SPECTRAL_MIS_TEST_16.exr", ColorSpace_sRGB);
-        simple_path_tracing_renderer.render(16, "SPECTRAL_MIS_TEST_SIMPLE_16.exr", ColorSpace_sRGB);
-        path_tracing_renderer.render(64, "SPECTRAL_MIS_TEST_64.exr", ColorSpace_sRGB);
-        simple_path_tracing_renderer.render(64, "SPECTRAL_MIS_TEST_SIMPLE_64.exr", ColorSpace_sRGB);
+        path_tracing_renderer.render(64, "RGB2SPECTRAL_TEST_64.exr", ColorSpace_sRGB);
     }
 
     return 0;
