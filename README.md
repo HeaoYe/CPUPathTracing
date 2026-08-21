@@ -15,6 +15,7 @@
 - Multiple Importance Sampling
 - Environment Lighting
 - Spectral Path Tracing
+- Jakob–Hanika 2019 RGB-to-Spectrum
 
 ## 画廊 Gallery
 ### 各向异性微表面
@@ -29,6 +30,9 @@
 ### 光谱路径追踪
 ![CPU Path Tracing](resource/L24.png)
 `Spectral Rendering` · `Wavelength Sampling` · `Spectral MIS`
+### RGB → 光谱
+![CPU Path Tracing](resource/L25.png)
+`Spectral Upsampling` · `RGB-to-Spectrum LUT` · `Sigmoid Polynomial Spectrum` · `RGB Illuminant Image`
 
 ## 公开课 Course
 <table>
@@ -210,14 +214,14 @@
     </tr>
     <tr>
       <td align="center">23</td>
-      <td align="center">光谱渲染（上）：色彩科学</td>
+      <td align="center">光谱渲染（上）色彩科学</td>
       <td align="center"><a href="https://www.bilibili.com/video/BV19nKv6TExV">视频</a></td>
       <td align="center"><a href="resource/L23%20光谱渲染（上）色彩科学.pptx">PPT</a></td>
       <td align="center"><a href="../../tree/Lecture23">Lecture23</a></td>
     </tr>
     <tr>
       <td align="center">24-1</td>
-      <td align="center">光谱渲染（中）：基础框架</td>
+      <td align="center">光谱渲染（中）基础框架</td>
       <td align="center"><a href="https://www.bilibili.com/video/BV18gup6TE4S">视频</a></td>
       <td align="center"><a href="resource/L24%20光谱渲染（中）光谱路径追踪.pptx">PPT</a></td>
       <td align="center"><a href="../../tree/Lecture24">Lecture24</a></td>
@@ -231,10 +235,10 @@
     </tr>
     <tr>
       <td align="center">25</td>
-      <td align="center">光谱渲染（下）</td>
-      <td align="center">制作中</td>
-      <td align="center">—</td>
-      <td align="center">—</td>
+      <td align="center">光谱渲染（下）RGB转光谱</td>
+      <td align="center"><a href="https://www.bilibili.com/video/BV1eN8u6dE3y">视频</a></td>
+      <td align="center"><a href="resource/L25%20光谱渲染（下）RGB转光谱.pptx">PPT</a></td>
+      <td align="center"><a href="../../tree/Lecture25">Lecture25</a></td>
     </tr>
   </tbody>
 </table>
@@ -289,6 +293,7 @@ cmake --build build -j 8
 ```bash
 ./build/source/CPUPathTracing
 ```
+第一次运行会在spectrums文件夹自动生成LUT文件
 
 ## 操作 Controls
 程序启动后会进入实时预览界面，可调整相机位置、视角与预览模式。
