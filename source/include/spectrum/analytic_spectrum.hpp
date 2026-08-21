@@ -10,9 +10,9 @@ public:
         std::function<float(float)> expression,
         float lambda_min = g_lambda_min, float lambda_max = g_lambda_max
     ) : Spectrum(lambda_min, lambda_max), expression(std::move(expression)) {
-        maximum = std::max(expression(lambda_min), expression(lambda_max));
+        maximum = std::max(this->expression(lambda_min), this->expression(lambda_max));
         for (float lambda = lambda_min + 0.1; lambda < lambda_max; lambda += 0.1) {
-            float value = expression(lambda);
+            float value = this->expression(lambda);
             if (maximum < value) {
                 maximum = value;
             }

@@ -1,4 +1,5 @@
 #include "color/color_space.hpp"
+#include "color/color_lut.hpp"
 #include "spectrum/illuminant.hpp"
 
 ColorSpace::ColorSpace(xy r, xy g, xy b, xy w, TransferFunction transfer_function)
@@ -25,6 +26,7 @@ void ColorSpace::calculateMatrix(xy r, xy g, xy b, XYZ W) {
 
 ColorSpace *ColorSpace_sRGB = nullptr;
 ColorSpace *ColorSpace_DCI_P3 = nullptr;
+ColorLUT *ColorLUT_sRGB = nullptr;
 
 void InitColorSpace() {
     ColorSpace_sRGB = new ColorSpace {
@@ -62,4 +64,6 @@ void InitColorSpace() {
             },
         },
     };
+
+    ColorLUT_sRGB = new ColorLUT { "spectrums/ColorLUT_sRGB.lut", ColorSpace_sRGB, &CIE_standard_illumt_D65 };
 }

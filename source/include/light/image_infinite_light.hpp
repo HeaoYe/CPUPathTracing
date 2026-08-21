@@ -1,12 +1,12 @@
 #pragma once
 
 #include "light/light.hpp"
-#include "image/image.hpp"
+#include "image/rgb_illuminant_image.hpp"
 #include "sample/alias_table.hpp"
 
 class ImageInfiniteLight : public Light {
 public:
-    ImageInfiniteLight(const Image *image, float start_phi = 0);
+    ImageInfiniteLight(const Image &image, float start_phi = 0);
     bool skipMISCompensation() const override { return skip_mis_compensation; }
 
     float Phi(float scene_radius) const override { return precompute_phi * scene_radius * scene_radius; }
@@ -38,11 +38,11 @@ private:
     glm::vec3 directionFromImagePoint(const glm::vec2 &image_point) const;
     glm::ivec2 girdIdxFromImagePoint(const glm::vec2 &image_point) const;
 private:
-    const Image *image;
-    bool skip_mis_compensation;
-    float start_phi;
-    float precompute_phi;
+    RGBIlluminantImage image;
+    bool skip_mis_compensation {};
+    float start_phi {};
+    float precompute_phi {};
     AliasTable alias_table, alias_table_compensated;
-    glm::ivec2 gird_count;
+    glm::ivec2 gird_count {};
     static constexpr size_t gird_side_length = 50;
 };

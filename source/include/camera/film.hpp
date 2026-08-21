@@ -7,23 +7,25 @@
 
 class PixelSample {
 public:
-    PixelSample() = default;
+    PixelSample() : type(ContributeType::eNone) {}
 
     PixelSample(const SpectrumSamples &spectrum_samples, const WavelengthSamples &wavelength)
-        : spectrum_samples(spectrum_samples), wavelength(wavelength), type(ContributeType::eSpectrum) {}
+        : spectrum({ spectrum_samples, wavelength }), type(ContributeType::eSpectrum) {}
 
     PixelSample(const EncodedRGB &encoded_rgb, const ColorSpace *color_space)
-        : encoded_rgb(encoded_rgb), color_space(color_space), type(ContributeType::eRGB) {}
+        : rgb({ encoded_rgb, color_space }), type(ContributeType::eRGB) {}
 public:
+    struct SpectrumSample {
+        SpectrumSamples spectrum_samples {};
+        WavelengthSamples wavelength {};
+    };
+    struct RGBSample {
+        EncodedRGB encoded_rgb {};
+        const ColorSpace *color_space {};
+    };
     union {
-        struct {
-            SpectrumSamples spectrum_samples;
-            WavelengthSamples wavelength;
-        };
-        struct {
-            EncodedRGB encoded_rgb {};
-            const ColorSpace *color_space {};
-        };
+        SpectrumSample spectrum;
+        RGBSample rgb;
     };
 
     enum class ContributeType {
@@ -51,10 +53,10 @@ public:
         XYZ xyz_sample {};
         switch (sample.type) {
         case PixelSample::ContributeType::eSpectrum:
-            xyz_sample = XYZ(sample.spectrum_samples, sample.wavelength);
+            xyz_sample = XYZ(sample.spectrum.spectrum_samples, sample.spectrum.wavelength);
             break;
         case PixelSample::ContributeType::eRGB:
-            xyz_sample = sample.color_space->XYZFromRGB(sample.color_space->decode(sample.encoded_rgb));
+            xyz_sample = sample.rgb.color_space->XYZFromRGB(sample.rgb.color_space->decode(sample.rgb.encoded_rgb));
             break;
         case PixelSample::ContributeType::eNone:
         default:

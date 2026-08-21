@@ -146,20 +146,26 @@ SpectrumSamples DielectricMaterial::BSDF(const glm::vec3 &hit_point, const glm::
     for (size_t i = 0; i < g_wavelength_sample_count; i ++) {
         microfacet_normal = light_direction + view_direction / etai_div_etat[i];
         if (glm::dot(microfacet_normal, microfacet_normal) == 0) {
-            return {};
+            btdf[i] = 0;
+            continue;
         }
         if (microfacet_normal.y < 0) {
             microfacet_normal = -microfacet_normal;
         }
         if ((glm::dot(light_direction, microfacet_normal) * light_direction.y <= 0) ||
             (glm::dot(view_direction, microfacet_normal) * view_direction.y <= 0)) {
-            return {};
+            btdf[i] = 0;
+            continue;
         }
         microfacet_normal = glm::normalize(microfacet_normal);
 
         float cos_theta_t = glm::dot(view_direction, microfacet_normal * scale);
         float cos_theta_i;
         float fr = Fresnel(etai_div_etat[i], cos_theta_t, cos_theta_i);
+        if (fr == 1) {
+            btdf[i] = 0;
+            continue;
+        }
 
         float det_J = etai_div_etat[i] * etai_div_etat[i] * glm::abs(glm::dot(light_direction, microfacet_normal))
             / glm::pow(
@@ -215,20 +221,23 @@ SpectrumSamples DielectricMaterial::PDF(const glm::vec3 &hit_point, const glm::v
     for (size_t i = 0; i < g_wavelength_sample_count; i ++) {
         microfacet_normal = light_direction + view_direction / etai_div_etat[i];
         if (glm::dot(microfacet_normal, microfacet_normal) == 0) {
-            return {};
+            continue;
         }
         if (microfacet_normal.y < 0) {
             microfacet_normal = -microfacet_normal;
         }
         if ((glm::dot(light_direction, microfacet_normal) * light_direction.y <= 0) ||
             (glm::dot(view_direction, microfacet_normal) * view_direction.y <= 0)) {
-            return {};
+            continue;
         }
         microfacet_normal = glm::normalize(microfacet_normal);
 
         float cos_theta_t = glm::dot(view_direction, microfacet_normal * scale);
         float cos_theta_i;
         float fr = Fresnel(etai_div_etat[i], cos_theta_t, cos_theta_i);
+        if (fr == 1) {
+            continue;
+        }
 
         float det_J = etai_div_etat[i] * etai_div_etat[i] * glm::abs(glm::dot(light_direction, microfacet_normal))
             / glm::pow(

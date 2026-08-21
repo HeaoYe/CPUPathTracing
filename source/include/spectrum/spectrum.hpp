@@ -151,6 +151,22 @@ inline SpectrumSamples operator/(float lhs, const SpectrumSamples &rhs) {
     return result;
 }
 
+inline SpectrumSamples Log(const SpectrumSamples &rhs) {
+    SpectrumSamples result {};
+    for (size_t i = 0; i < g_wavelength_sample_count; i ++) {
+        result[i] = std::log(rhs[i]);
+    }
+    return result;
+}
+
+inline SpectrumSamples Exp(const SpectrumSamples &rhs) {
+    SpectrumSamples result {};
+    for (size_t i = 0; i < g_wavelength_sample_count; i ++) {
+        result[i] = std::exp(rhs[i]);
+    }
+    return result;
+}
+
 class Spectrum {
 public:
     Spectrum() : lambda_min(g_lambda_min), lambda_max(g_lambda_max) {}
