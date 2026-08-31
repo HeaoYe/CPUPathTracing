@@ -3,6 +3,8 @@
 一个**从零实现、面向教学的 C++17 CPU 基于物理的 路径追踪渲染器**，同时也是
 [Bilibili 公开课](https://www.bilibili.com/video/BV1MJYAeYEDk) 的配套代码仓库。
 
+此外，本课程还提供了对应的**Rust实现**：[CPUPathTracing-rs](https://github.com/HeaoYe/CPUPathTracing-rs) 。
+
 ## 项目简介 Intro
 项目从最基础的Hello World开始，逐步实现 线程池、光线求交、BVH、路径追踪、重要性采样、
 微表面模型、光源采样、MIS、环境光照以及光谱路径追踪。
